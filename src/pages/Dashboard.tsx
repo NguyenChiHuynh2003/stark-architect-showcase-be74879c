@@ -38,11 +38,49 @@ const Dashboard = () => {
     },
   ];
 
-  const recentProjects = [
-    { name: "Xây dựng tòa nhà văn phòng", progress: 75, status: "Đúng tiến độ" },
-    { name: "Dự án mở rộng đường cao tốc", progress: 45, status: "Đang thực hiện" },
-    { name: "Cải tạo trung tâm thương mại", progress: 90, status: "Sắp hoàn thành" },
-    { name: "Khu dân cư giai đoạn 2", progress: 30, status: "Bắt đầu" },
+  const constructionProjects = [
+    {
+      name: "Thi công Khu A",
+      subProjects: [
+        {
+          name: "Dự án nhỏ A1",
+          details: {
+            personnel: 25,
+            materials: "Thép, Xi măng, Gạch",
+            completionRate: 75,
+          },
+        },
+        {
+          name: "Dự án nhỏ A2",
+          details: {
+            personnel: 18,
+            materials: "Xi măng, Cát, Sỏi",
+            completionRate: 60,
+          },
+        },
+      ],
+    },
+    {
+      name: "Thi công Khu B",
+      subProjects: [
+        {
+          name: "Dự án nhỏ B1",
+          details: {
+            personnel: 32,
+            materials: "Thép, Gỗ, Kính",
+            completionRate: 45,
+          },
+        },
+        {
+          name: "Dự án nhỏ B2",
+          details: {
+            personnel: 20,
+            materials: "Gạch, Đá granite, Sơn",
+            completionRate: 90,
+          },
+        },
+      ],
+    },
   ];
 
   return (
@@ -79,29 +117,52 @@ const Dashboard = () => {
               ))}
             </div>
 
-            {/* Recent Projects */}
+            {/* Construction Projects */}
             <Card className="border-border shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FolderKanban className="w-5 h-5 text-primary" />
-                  Dự án gần đây
+                  Dự án thi công
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentProjects.map((project, index) => (
-                    <div key={index} className="border border-border rounded-lg p-4 hover:shadow-sm transition-shadow">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-foreground">{project.name}</h4>
-                        <span className="text-sm text-muted-foreground">{project.status}</span>
+                <div className="space-y-6">
+                  {constructionProjects.map((construction, cIndex) => (
+                    <div key={cIndex} className="border border-border rounded-lg p-4">
+                      <h3 className="font-bold text-foreground text-lg mb-4">{construction.name}</h3>
+                      <div className="space-y-4">
+                        {construction.subProjects.map((subProject, sIndex) => (
+                          <div key={sIndex} className="bg-muted/50 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                            <h4 className="font-semibold text-foreground mb-3">{subProject.name}</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-primary" />
+                                <span className="text-sm text-muted-foreground">
+                                  Nhân sự: <strong className="text-foreground">{subProject.details.personnel}</strong>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-accent" />
+                                <span className="text-sm text-muted-foreground">
+                                  Vật tư: <strong className="text-foreground">{subProject.details.materials}</strong>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-primary" />
+                                <span className="text-sm text-muted-foreground">
+                                  Hoàn thành: <strong className="text-foreground">{subProject.details.completionRate}%</strong>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2">
+                              <div
+                                className="bg-primary h-2 rounded-full transition-all"
+                                style={{ width: `${subProject.details.completionRate}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full transition-all"
-                          style={{ width: `${project.progress}%` }}
-                        />
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">Hoàn thành {project.progress}%</p>
                     </div>
                   ))}
                 </div>

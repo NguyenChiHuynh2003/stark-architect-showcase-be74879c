@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,7 +11,6 @@ const Login = () => {
   const navigate = useNavigate();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,31 +71,6 @@ const Login = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  />
-                  <label
-                    htmlFor="remember"
-                    className="text-sm text-muted-foreground cursor-pointer"
-                  >
-                    Nhớ tài khoản
-                  </label>
-                </div>
-                <a
-                  href="#"
-                  className="text-sm text-destructive hover:underline"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toast.info("Tính năng đặt lại mật khẩu sắp ra mắt!");
-                  }}
-                >
-                  Quên mật khẩu?
-                </a>
-              </div>
 
               <Button
                 type="submit"
@@ -106,19 +79,6 @@ const Login = () => {
                 ĐĂNG NHẬP
               </Button>
             </form>
-
-            <div className="mt-6 text-center">
-              <a
-                href="#"
-                className="text-sm text-primary hover:underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  toast.info("Trang chính sách bảo mật sắp ra mắt!");
-                }}
-              >
-                Chính sách bảo mật
-              </a>
-            </div>
           </CardContent>
         </Card>
       </div>

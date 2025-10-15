@@ -9,28 +9,28 @@ const Dashboard = () => {
 
   const stats = [
     {
-      title: "Active Projects",
+      title: "Dự án đang hoạt động",
       value: "24",
       icon: FolderKanban,
       trend: "+12%",
       color: "text-primary",
     },
     {
-      title: "Pending Tasks",
+      title: "Nhiệm vụ chờ xử lý",
       value: "156",
       icon: CheckSquare,
       trend: "+8%",
       color: "text-accent",
     },
     {
-      title: "Team Members",
+      title: "Thành viên nhóm",
       value: "48",
       icon: Users,
       trend: "+3%",
       color: "text-primary",
     },
     {
-      title: "Overdue Items",
+      title: "Mục quá hạn",
       value: "7",
       icon: AlertCircle,
       trend: "-15%",
@@ -39,10 +39,10 @@ const Dashboard = () => {
   ];
 
   const recentProjects = [
-    { name: "Office Building Construction", progress: 75, status: "On Track" },
-    { name: "Highway Expansion Project", progress: 45, status: "In Progress" },
-    { name: "Shopping Mall Renovation", progress: 90, status: "Nearly Complete" },
-    { name: "Residential Complex Phase 2", progress: 30, status: "Starting" },
+    { name: "Xây dựng tòa nhà văn phòng", progress: 75, status: "Đúng tiến độ" },
+    { name: "Dự án mở rộng đường cao tốc", progress: 45, status: "Đang thực hiện" },
+    { name: "Cải tạo trung tâm thương mại", progress: 90, status: "Sắp hoàn thành" },
+    { name: "Khu dân cư giai đoạn 2", progress: 30, status: "Bắt đầu" },
   ];
 
   return (
@@ -55,8 +55,8 @@ const Dashboard = () => {
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto space-y-6">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
-              <p className="text-muted-foreground">Welcome back! Here's what's happening with your projects.</p>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Tổng quan bảng điều khiển</h1>
+              <p className="text-muted-foreground">Chào mừng trở lại! Đây là những gì đang diễn ra với các dự án của bạn.</p>
             </div>
 
             {/* Stats Grid */}
@@ -68,7 +68,7 @@ const Dashboard = () => {
                       <div>
                         <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
                         <h3 className="text-3xl font-bold text-foreground">{stat.value}</h3>
-                        <p className={`text-sm mt-2 ${stat.color}`}>{stat.trend} from last month</p>
+                        <p className={`text-sm mt-2 ${stat.color}`}>{stat.trend} so với tháng trước</p>
                       </div>
                       <div className={`p-3 rounded-lg bg-primary/10`}>
                         <stat.icon className={`w-6 h-6 ${stat.color}`} />
@@ -84,7 +84,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FolderKanban className="w-5 h-5 text-primary" />
-                  Recent Projects
+                  Dự án gần đây
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -101,7 +101,7 @@ const Dashboard = () => {
                           style={{ width: `${project.progress}%` }}
                         />
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">{project.progress}% Complete</p>
+                      <p className="text-sm text-muted-foreground mt-1">Hoàn thành {project.progress}%</p>
                     </div>
                   ))}
                 </div>
@@ -116,8 +116,8 @@ const Dashboard = () => {
                     <div className="p-4 rounded-full bg-primary/10">
                       <FolderKanban className="w-8 h-8 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground">New Project</h3>
-                    <p className="text-sm text-muted-foreground">Create a new project and start managing tasks</p>
+                    <h3 className="font-semibold text-foreground">Dự án mới</h3>
+                    <p className="text-sm text-muted-foreground">Tạo dự án mới và bắt đầu quản lý nhiệm vụ</p>
                   </div>
                 </CardContent>
               </Card>
@@ -128,8 +128,8 @@ const Dashboard = () => {
                     <div className="p-4 rounded-full bg-accent/10">
                       <FileText className="w-8 h-8 text-accent" />
                     </div>
-                    <h3 className="font-semibold text-foreground">Generate Report</h3>
-                    <p className="text-sm text-muted-foreground">Create detailed reports for your projects</p>
+                    <h3 className="font-semibold text-foreground">Tạo báo cáo</h3>
+                    <p className="text-sm text-muted-foreground">Tạo báo cáo chi tiết cho các dự án của bạn</p>
                   </div>
                 </CardContent>
               </Card>
@@ -140,8 +140,8 @@ const Dashboard = () => {
                     <div className="p-4 rounded-full bg-primary/10">
                       <Users className="w-8 h-8 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground">Manage Team</h3>
-                    <p className="text-sm text-muted-foreground">Add or manage team members and roles</p>
+                    <h3 className="font-semibold text-foreground">Quản lý nhóm</h3>
+                    <p className="text-sm text-muted-foreground">Thêm hoặc quản lý thành viên và vai trò trong nhóm</p>
                   </div>
                 </CardContent>
               </Card>

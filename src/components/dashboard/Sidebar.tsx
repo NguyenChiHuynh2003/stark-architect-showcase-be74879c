@@ -11,15 +11,15 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "projects", label: "Projects", icon: FolderKanban },
-    { id: "tasks", label: "Tasks", icon: CheckSquare },
-    { id: "reports", label: "Reports", icon: FileText },
-    { id: "settings", label: "Settings", icon: Settings },
+    { id: "overview", label: "Tổng quan", icon: LayoutDashboard },
+    { id: "projects", label: "Dự án", icon: FolderKanban },
+    { id: "tasks", label: "Nhiệm vụ", icon: CheckSquare },
+    { id: "reports", label: "Báo cáo", icon: FileText },
+    { id: "settings", label: "Cài đặt", icon: Settings },
   ];
 
   const handleLogout = () => {
-    toast.success("Logged out successfully");
+    toast.success("Đăng xuất thành công");
     navigate("/");
   };
 
@@ -32,7 +32,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
           </div>
           <div>
             <h2 className="text-lg font-bold">KBA.2018</h2>
-            <p className="text-xs text-sidebar-foreground/70">Management System</p>
+            <p className="text-xs text-sidebar-foreground/70">Hệ thống quản lý</p>
           </div>
         </div>
       </div>
@@ -45,7 +45,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
                 onClick={() => {
                   setActiveSection(item.id);
                   if (item.id !== "overview") {
-                    toast.info(`${item.label} section coming soon!`);
+                    toast.info(`Mục ${item.label} sắp ra mắt!`);
                   }
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -68,7 +68,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground transition-colors"
         >
           <LogOut className="w-5 h-5" />
-          <span className="font-medium">Logout</span>
+          <span className="font-medium">Đăng xuất</span>
         </button>
       </div>
     </aside>

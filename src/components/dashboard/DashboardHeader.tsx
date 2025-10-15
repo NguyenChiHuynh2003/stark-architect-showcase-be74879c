@@ -11,7 +11,7 @@ export const DashboardHeader = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search projects, tasks, or reports..."
+              placeholder="Tìm kiếm dự án, nhiệm vụ hoặc báo cáo..."
               className="pl-10 w-full"
             />
           </div>
@@ -25,8 +25,8 @@ export const DashboardHeader = () => {
           
           <div className="flex items-center gap-3 pl-3 border-l border-border">
             <div className="text-right">
-              <p className="text-sm font-medium text-foreground">Admin User</p>
-              <p className="text-xs text-muted-foreground">Administrator</p>
+              <p className="text-sm font-medium text-foreground">Người quản trị</p>
+              <p className="text-xs text-muted-foreground">Quản trị viên</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
               <User className="w-5 h-5 text-primary-foreground" />

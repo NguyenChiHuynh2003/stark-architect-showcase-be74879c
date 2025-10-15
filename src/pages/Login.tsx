@@ -18,12 +18,12 @@ const Login = () => {
     e.preventDefault();
     
     if (!loginId || !password) {
-      toast.error("Please fill in all fields");
+      toast.error("Vui lòng điền đầy đủ thông tin");
       return;
     }
 
     // Simulate login
-    toast.success("Login successful!");
+    toast.success("Đăng nhập thành công!");
     navigate("/dashboard");
   };
 
@@ -41,13 +41,13 @@ const Login = () => {
 
         <Card className="shadow-lg border-border">
           <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
-            <h2 className="text-xl font-semibold text-center">SYSTEM LOGIN</h2>
+            <h2 className="text-xl font-semibold text-center">ĐĂNG NHẬP HỆ THỐNG</h2>
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="loginId" className="text-sm font-medium">
-                  LOGIN ID
+                  MÃ ĐĂNG NHẬP
                 </Label>
                 <Input
                   id="loginId"
@@ -55,13 +55,13 @@ const Login = () => {
                   value={loginId}
                   onChange={(e) => setLoginId(e.target.value)}
                   className="w-full"
-                  placeholder="Enter your login ID"
+                  placeholder="Nhập mã đăng nhập"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  PASSWORD
+                  MẬT KHẨU
                 </Label>
                 <Input
                   id="password"
@@ -69,7 +69,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full"
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu"
                 />
               </div>
 
@@ -84,7 +84,7 @@ const Login = () => {
                     htmlFor="remember"
                     className="text-sm text-muted-foreground cursor-pointer"
                   >
-                    Remember account
+                    Nhớ tài khoản
                   </label>
                 </div>
                 <a
@@ -92,10 +92,10 @@ const Login = () => {
                   className="text-sm text-destructive hover:underline"
                   onClick={(e) => {
                     e.preventDefault();
-                    toast.info("Password reset feature coming soon!");
+                    toast.info("Tính năng đặt lại mật khẩu sắp ra mắt!");
                   }}
                 >
-                  Forgot password?
+                  Quên mật khẩu?
                 </a>
               </div>
 
@@ -103,7 +103,7 @@ const Login = () => {
                 type="submit"
                 className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-6 text-base"
               >
-                LOGIN
+                ĐĂNG NHẬP
               </Button>
             </form>
 
@@ -113,10 +113,10 @@ const Login = () => {
                 className="text-sm text-primary hover:underline"
                 onClick={(e) => {
                   e.preventDefault();
-                  toast.info("Privacy policy page coming soon!");
+                  toast.info("Trang chính sách bảo mật sắp ra mắt!");
                 }}
               >
-                Privacy Policy
+                Chính sách bảo mật
               </a>
             </div>
           </CardContent>

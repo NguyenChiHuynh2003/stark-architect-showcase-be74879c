@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,23 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
 
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!loginId || !password) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
-      return;
-    }
-
-    // Simulate login
-    toast.success("Đăng nhập thành công!");
-    navigate("/dashboard");
+    navigate("/auth");
   };
 
   return (

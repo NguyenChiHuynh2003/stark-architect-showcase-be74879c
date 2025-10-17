@@ -1,6 +1,7 @@
 import { LayoutDashboard, FolderKanban, CheckSquare, FileText, Settings, LogOut, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
   activeSection: string;
@@ -9,6 +10,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const menuItems = [
     { id: "overview", label: "Tổng quan", icon: LayoutDashboard },
@@ -18,9 +20,10 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
     { id: "settings", label: "Cài đặt", icon: Settings },
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut();
     toast.success("Đăng xuất thành công");
-    navigate("/");
+    navigate("/auth");
   };
 
   return (
@@ -44,7 +47,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
               <button
                 onClick={() => {
                   setActiveSection(item.id);
-                  if (item.id !== "overview") {
+                  if (item.id !== "overview" && item.id !== "projects") {
                     toast.info(`Mục ${item.label} sắp ra mắt!`);
                   }
                 }}

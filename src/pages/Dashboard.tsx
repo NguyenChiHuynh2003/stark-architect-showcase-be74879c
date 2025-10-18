@@ -5,6 +5,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { BarChart3, FolderKanban, CheckSquare, FileText, TrendingUp, Clock, Users, AlertCircle } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ProjectsSection } from "@/components/dashboard/ProjectsSection";
+import { AdminUsers } from "@/components/dashboard/AdminUsers";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -97,6 +98,8 @@ const Dashboard = () => {
             <div className="max-w-7xl mx-auto space-y-6">
               {activeSection === "projects" ? (
                 <ProjectsSection />
+              ) : activeSection === "admin-users" ? (
+                <AdminUsers />
               ) : activeSection === "overview" ? (
                 <>
                   <div>

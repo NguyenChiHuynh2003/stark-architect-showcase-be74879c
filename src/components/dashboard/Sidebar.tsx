@@ -1,7 +1,9 @@
-import { LayoutDashboard, FolderKanban, CheckSquare, FileText, Settings, LogOut, Building2 } from "lucide-react";
+import { LayoutDashboard, FolderKanban, CheckSquare, FileText, Settings, LogOut, Building2, UserCog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SidebarProps {
   activeSection: string;
@@ -10,7 +12,25 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      
+      setIsAdmin(!!data);
+    };
+    
+    checkAdminRole();
+  }, [user]);
 
   const menuItems = [
     { id: "overview", label: "Tổng quan", icon: LayoutDashboard },
@@ -18,6 +38,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
     { id: "tasks", label: "Nhiệm vụ", icon: CheckSquare },
     { id: "reports", label: "Báo cáo", icon: FileText },
     { id: "settings", label: "Cài đặt", icon: Settings },
+    ...(isAdmin ? [{ id: "admin-users", label: "Quản lý người dùng", icon: UserCog }] : []),
   ];
 
   const handleLogout = async () => {
@@ -47,7 +68,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
               <button
                 onClick={() => {
                   setActiveSection(item.id);
-                  if (item.id !== "overview" && item.id !== "projects") {
+                  if (item.id !== "overview" && item.id !== "projects" && item.id !== "admin-users") {
                     toast.info(`Mục ${item.label} sắp ra mắt!`);
                   }
                 }}

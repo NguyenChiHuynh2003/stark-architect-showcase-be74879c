@@ -218,7 +218,16 @@ const Dashboard = () => {
                     </Card>
                   </div>
                 </>
-              ) : null}
+              ) : (
+                <Card className="border-border">
+                  <CardContent className="pt-6">
+                    <div className="text-center py-12">
+                      <h2 className="text-2xl font-bold text-foreground mb-2">Tính năng đang phát triển</h2>
+                      <p className="text-muted-foreground">Mục này sẽ sớm được ra mắt!</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </main>
         </div>

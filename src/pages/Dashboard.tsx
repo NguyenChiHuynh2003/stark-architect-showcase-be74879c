@@ -6,6 +6,7 @@ import { BarChart3, FolderKanban, CheckSquare, FileText, TrendingUp, Clock, User
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ProjectsSection } from "@/components/dashboard/ProjectsSection";
 import { AdminUsers } from "@/components/dashboard/AdminUsers";
+import { TasksSection } from "@/components/dashboard/TasksSection";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -98,6 +99,8 @@ const Dashboard = () => {
             <div className="max-w-7xl mx-auto space-y-6">
               {activeSection === "projects" ? (
                 <ProjectsSection />
+              ) : activeSection === "tasks" ? (
+                <TasksSection />
               ) : activeSection === "admin-users" ? (
                 <AdminUsers />
               ) : activeSection === "overview" ? (

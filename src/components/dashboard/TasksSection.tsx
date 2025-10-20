@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Plus, Edit, Trash2, CheckCircle2, Clock, AlertCircle, Search, Filter } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -55,6 +55,9 @@ export const TasksSection = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterPriority, setFilterPriority] = useState<string>("all");
   
   const [formData, setFormData] = useState({
     title: "",
@@ -269,28 +272,38 @@ export const TasksSection = () => {
   const getPriorityBadge = (priority: string | null) => {
     if (!priority) return null;
     
-    const colors: Record<string, string> = {
-      low: "bg-blue-100 text-blue-800",
-      medium: "bg-yellow-100 text-yellow-800",
-      high: "bg-red-100 text-red-800",
+    const variants: Record<string, any> = {
+      low: "secondary",
+      medium: "default",
+      high: "destructive",
     };
 
     return (
-      <Badge className={colors[priority] || colors.medium}>
+      <Badge variant={variants[priority] || variants.medium}>
         {priority === "low" ? "Thấp" : priority === "medium" ? "Trung bình" : "Cao"}
       </Badge>
     );
   };
 
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         task.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === "all" || task.status === filterStatus;
+    const matchesPriority = filterPriority === "all" || task.priority === filterPriority;
+    
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Quản lý nhiệm vụ</CardTitle>
-            <CardDescription>Tạo và theo dõi các nhiệm vụ trong dự án</CardDescription>
-          </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Quản lý nhiệm vụ</CardTitle>
+              <CardDescription>Tạo và theo dõi các nhiệm vụ trong dự án</CardDescription>
+            </div>
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
           }}>
@@ -429,14 +442,56 @@ export const TasksSection = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[250px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Tìm kiếm nhiệm vụ..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px]">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="pending">Chờ xử lý</SelectItem>
+                <SelectItem value="in_progress">Đang thực hiện</SelectItem>
+                <SelectItem value="completed">Hoàn thành</SelectItem>
+                <SelectItem value="overdue">Quá hạn</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterPriority} onValueChange={setFilterPriority}>
+              <SelectTrigger className="w-[180px]">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Độ ưu tiên" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả mức độ</SelectItem>
+                <SelectItem value="low">Thấp</SelectItem>
+                <SelectItem value="medium">Trung bình</SelectItem>
+                <SelectItem value="high">Cao</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         {loading ? (
           <p>Đang tải...</p>
-        ) : tasks.length === 0 ? (
+        ) : filteredTasks.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Chưa có nhiệm vụ nào. Tạo nhiệm vụ đầu tiên!</p>
+            <p className="text-muted-foreground">
+              {tasks.length === 0 ? "Chưa có nhiệm vụ nào. Tạo nhiệm vụ đầu tiên!" : "Không tìm thấy nhiệm vụ phù hợp"}
+            </p>
           </div>
         ) : (
           <Table>
@@ -452,7 +507,7 @@ export const TasksSection = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tasks.map((task) => (
+              {filteredTasks.map((task) => (
                 <TableRow key={task.id}>
                   <TableCell className="font-medium">{task.title}</TableCell>
                   <TableCell>{task.projects?.name}</TableCell>

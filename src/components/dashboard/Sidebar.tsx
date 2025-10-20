@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderKanban, CheckSquare, FileText, Settings, LogOut, Building2, UserCog } from "lucide-react";
+import { LayoutDashboard, FolderKanban, CheckSquare, FileText, Settings, LogOut, Building2, UserCog, Users, DollarSign, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,6 +36,9 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
     { id: "overview", label: "Tổng quan", icon: LayoutDashboard },
     { id: "projects", label: "Dự án", icon: FolderKanban },
     { id: "tasks", label: "Nhiệm vụ", icon: CheckSquare },
+    { id: "hr", label: "Nhân sự", icon: Users },
+    { id: "accounting", label: "Kế toán", icon: DollarSign },
+    { id: "inventory", label: "Quản lí kho", icon: Package },
     { id: "reports", label: "Báo cáo", icon: FileText },
     { id: "settings", label: "Cài đặt", icon: Settings },
     ...(isAdmin ? [{ id: "admin-users", label: "Quản lý người dùng", icon: UserCog }] : []),
@@ -68,7 +71,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
               <button
                 onClick={() => {
                   setActiveSection(item.id);
-                  if (item.id !== "overview" && item.id !== "projects" && item.id !== "admin-users") {
+                  if (item.id !== "overview" && item.id !== "projects" && item.id !== "tasks" && item.id !== "admin-users" && item.id !== "hr" && item.id !== "accounting" && item.id !== "inventory") {
                     toast.info(`Mục ${item.label} sắp ra mắt!`);
                   }
                 }}

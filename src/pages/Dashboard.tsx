@@ -7,6 +7,9 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ProjectsSection } from "@/components/dashboard/ProjectsSection";
 import { AdminUsers } from "@/components/dashboard/AdminUsers";
 import { TasksSection } from "@/components/dashboard/TasksSection";
+import { HRSection } from "@/components/dashboard/HRSection";
+import { AccountingSection } from "@/components/dashboard/AccountingSection";
+import { InventorySection } from "@/components/dashboard/InventorySection";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -101,6 +104,12 @@ const Dashboard = () => {
                 <ProjectsSection />
               ) : activeSection === "tasks" ? (
                 <TasksSection />
+              ) : activeSection === "hr" ? (
+                <HRSection />
+              ) : activeSection === "accounting" ? (
+                <AccountingSection />
+              ) : activeSection === "inventory" ? (
+                <InventorySection />
               ) : activeSection === "admin-users" ? (
                 <AdminUsers />
               ) : activeSection === "overview" ? (

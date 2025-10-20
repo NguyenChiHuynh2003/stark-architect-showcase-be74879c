@@ -14,6 +14,103 @@ export type Database = {
   }
   public: {
     Tables: {
+      brands: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          brand_id: string | null
+          business_type: Database["public"]["Enums"]["business_type"] | null
+          category_id: string | null
+          created_at: string
+          id: string
+          min_stock_level: number | null
+          product_code: string
+          product_group_id: string | null
+          product_name: string
+          retail_price: number | null
+          stock_quantity: number | null
+          unit: string
+          updated_at: string
+          wholesale_price: number | null
+        }
+        Insert: {
+          brand_id?: string | null
+          business_type?: Database["public"]["Enums"]["business_type"] | null
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          min_stock_level?: number | null
+          product_code: string
+          product_group_id?: string | null
+          product_name: string
+          retail_price?: number | null
+          stock_quantity?: number | null
+          unit: string
+          updated_at?: string
+          wholesale_price?: number | null
+        }
+        Update: {
+          brand_id?: string | null
+          business_type?: Database["public"]["Enums"]["business_type"] | null
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          min_stock_level?: number | null
+          product_code?: string
+          product_group_id?: string | null
+          product_name?: string
+          retail_price?: number | null
+          stock_quantity?: number | null
+          unit?: string
+          updated_at?: string
+          wholesale_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_product_group_id_fkey"
+            columns: ["product_group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           created_at: string
@@ -57,6 +154,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      product_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -242,6 +387,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      business_type: "wholesale" | "retail" | "both"
       project_status: "planning" | "in_progress" | "completed" | "on_hold"
       task_status: "pending" | "in_progress" | "completed" | "overdue"
     }
@@ -372,6 +518,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      business_type: ["wholesale", "retail", "both"],
       project_status: ["planning", "in_progress", "completed", "on_hold"],
       task_status: ["pending", "in_progress", "completed", "overdue"],
     },

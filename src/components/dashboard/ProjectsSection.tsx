@@ -2,17 +2,19 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Edit, FolderKanban } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { ProjectCard } from "@/components/projects/ProjectCard";
+import { ProjectDetailDialog } from "@/components/projects/ProjectDetailDialog";
 
 type ProjectStatus = "planning" | "in_progress" | "completed" | "on_hold";
+type ProjectPriority = "low" | "medium" | "high" | "urgent";
 
 interface Project {
   id: string;
@@ -20,9 +22,11 @@ interface Project {
   description: string | null;
   location: string | null;
   status: ProjectStatus;
+  priority: ProjectPriority;
   start_date: string | null;
   end_date: string | null;
   budget: number | null;
+  created_at: string;
 }
 
 export const ProjectsSection = () => {
@@ -30,12 +34,14 @@ export const ProjectsSection = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     location: "",
     status: "planning" as ProjectStatus,
+    priority: "medium" as ProjectPriority,
     start_date: "",
     end_date: "",
     budget: "",
@@ -53,6 +59,60 @@ export const ProjectsSection = () => {
       return data as Project[];
     },
   });
+
+  const { data: projectsWithDetails } = useQuery({
+    queryKey: ["projects-with-details"],
+    queryFn: async () => {
+      const projectIds = projects?.map((p) => p.id) || [];
+      
+      const [tasksData, membersData] = await Promise.all([
+        supabase
+          .from("tasks")
+          .select("id, project_id, status")
+          .in("project_id", projectIds),
+        supabase
+          .from("team_members")
+          .select("*")
+          .in("project_id", projectIds),
+      ]);
+
+      return {
+        tasks: tasksData.data || [],
+        members: membersData.data || [],
+      };
+    },
+    enabled: !!projects && projects.length > 0,
+  });
+
+  const getProjectStats = (projectId: string) => {
+    const tasks = projectsWithDetails?.tasks.filter((t) => t.project_id === projectId) || [];
+    const teamMembers = projectsWithDetails?.members.filter((m) => m.project_id === projectId) || [];
+    
+    const members = teamMembers.map((m) => ({
+      id: m.id,
+      user_id: m.user_id,
+      profiles: {
+        full_name: "User",
+        avatar_url: null,
+      },
+    }));
+    
+    const taskStats = {
+      total: tasks.length,
+      planning: tasks.filter((t) => t.status === "pending").length,
+      in_progress: tasks.filter((t) => t.status === "in_progress").length,
+      on_hold: 0,
+      completed: tasks.filter((t) => t.status === "completed").length,
+      at_risk: 0,
+      delayed: tasks.filter((t) => t.status === "overdue").length,
+    };
+
+    const progress = taskStats.total > 0
+      ? Math.round((taskStats.completed / taskStats.total) * 100)
+      : 0;
+
+    return { taskStats, members, progress };
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -126,6 +186,7 @@ export const ProjectsSection = () => {
       description: "",
       location: "",
       status: "planning",
+      priority: "medium",
       start_date: "",
       end_date: "",
       budget: "",
@@ -150,6 +211,7 @@ export const ProjectsSection = () => {
       description: project.description || "",
       location: project.location || "",
       status: project.status,
+      priority: project.priority,
       start_date: project.start_date || "",
       end_date: project.end_date || "",
       budget: project.budget?.toString() || "",
@@ -214,24 +276,45 @@ export const ProjectsSection = () => {
                   }
                 />
               </div>
-              <div>
-                <Label htmlFor="status">Trạng thái</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: ProjectStatus) =>
-                    setFormData({ ...formData, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="planning">Đang lập kế hoạch</SelectItem>
-                    <SelectItem value="in_progress">Đang thực hiện</SelectItem>
-                    <SelectItem value="completed">Hoàn thành</SelectItem>
-                    <SelectItem value="on_hold">Tạm dừng</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="status">Trạng thái</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value: ProjectStatus) =>
+                      setFormData({ ...formData, status: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="planning">Đang lập kế hoạch</SelectItem>
+                      <SelectItem value="in_progress">Đang thực hiện</SelectItem>
+                      <SelectItem value="completed">Hoàn thành</SelectItem>
+                      <SelectItem value="on_hold">Tạm dừng</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="priority">Mức độ ưu tiên</Label>
+                  <Select
+                    value={formData.priority}
+                    onValueChange={(value: ProjectPriority) =>
+                      setFormData({ ...formData, priority: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Thấp</SelectItem>
+                      <SelectItem value="medium">Trung bình</SelectItem>
+                      <SelectItem value="high">Cao</SelectItem>
+                      <SelectItem value="urgent">Khẩn cấp</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -285,59 +368,29 @@ export const ProjectsSection = () => {
       {isLoading ? (
         <div className="text-center py-8">Đang tải...</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects?.map((project) => (
-            <Card key={project.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <FolderKanban className="w-5 h-5 text-primary" />
-                    <CardTitle className="text-lg">{project.name}</CardTitle>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleEdit(project)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => deleteMutation.mutate(project.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {project.description || "Không có mô tả"}
-                </p>
-                {project.location && (
-                  <p className="text-sm">
-                    <strong>Địa điểm:</strong> {project.location}
-                  </p>
-                )}
-                <p className="text-sm">
-                  <strong>Trạng thái:</strong>{" "}
-                  <span className="text-primary">{statusLabels[project.status]}</span>
-                </p>
-                {project.budget && (
-                  <p className="text-sm">
-                    <strong>Ngân sách:</strong>{" "}
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(project.budget)}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+        <div className="space-y-4">
+          {projects?.map((project) => {
+            const { taskStats, members, progress } = getProjectStats(project.id);
+            return (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                taskStats={taskStats}
+                teamMembers={members}
+                progress={progress}
+                onViewDetails={() => setSelectedProjectId(project.id)}
+              />
+            );
+          })}
         </div>
+      )}
+
+      {selectedProjectId && (
+        <ProjectDetailDialog
+          projectId={selectedProjectId}
+          open={!!selectedProjectId}
+          onOpenChange={(open) => !open && setSelectedProjectId(null)}
+        />
       )}
     </div>
   );

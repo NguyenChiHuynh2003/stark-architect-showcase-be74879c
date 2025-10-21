@@ -38,6 +38,51 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          created_at: string
+          date_joined: string
+          date_of_birth: string | null
+          department: string | null
+          employee_card_photo_url: string | null
+          full_name: string
+          id: string
+          id_card_photo_url: string | null
+          phone: string | null
+          position: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          date_joined?: string
+          date_of_birth?: string | null
+          department?: string | null
+          employee_card_photo_url?: string | null
+          full_name: string
+          id?: string
+          id_card_photo_url?: string | null
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          date_joined?: string
+          date_of_birth?: string | null
+          department?: string | null
+          employee_card_photo_url?: string | null
+          full_name?: string
+          id?: string
+          id_card_photo_url?: string | null
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           brand_id: string | null

@@ -70,9 +70,13 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
             <li key={item.id}>
               <button
                 onClick={() => {
-                  setActiveSection(item.id);
-                  if (item.id !== "overview" && item.id !== "projects" && item.id !== "tasks" && item.id !== "admin-users" && item.id !== "hr" && item.id !== "accounting" && item.id !== "inventory") {
-                    toast.info(`Mục ${item.label} sắp ra mắt!`);
+                  if (item.id === "reports") {
+                    navigate("/reports");
+                  } else {
+                    setActiveSection(item.id);
+                    if (item.id !== "overview" && item.id !== "projects" && item.id !== "tasks" && item.id !== "admin-users" && item.id !== "hr" && item.id !== "accounting" && item.id !== "inventory") {
+                      toast.info(`Mục ${item.label} sắp ra mắt!`);
+                    }
                   }
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${

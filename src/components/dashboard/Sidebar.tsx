@@ -72,6 +72,8 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
                 onClick={() => {
                   if (item.id === "reports") {
                     navigate("/reports");
+                  } else if (item.id === "settings") {
+                    navigate("/settings");
                   } else {
                     setActiveSection(item.id);
                     if (item.id !== "overview" && item.id !== "projects" && item.id !== "tasks" && item.id !== "admin-users" && item.id !== "hr" && item.id !== "accounting" && item.id !== "inventory") {

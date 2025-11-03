@@ -6,10 +6,15 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { FileText, TrendingUp, Users, Package, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { useNavigate } from "react-router-dom";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function Reports() {
+  const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState("reports");
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("month");
   const [projectStats, setProjectStats] = useState<any[]>([]);
@@ -21,6 +26,13 @@ export default function Reports() {
     totalExpense: 0,
     profit: 0,
   });
+
+  const handleSectionChange = (section: string) => {
+    if (section !== "reports") {
+      navigate("/dashboard");
+    }
+    setActiveSection(section);
+  };
 
   useEffect(() => {
     fetchAllData();
@@ -176,10 +188,14 @@ export default function Reports() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardHeader />
-      
-      <div className="container mx-auto p-6 space-y-6">
+    <ProtectedRoute>
+      <div className="flex min-h-screen bg-background">
+        <Sidebar activeSection={activeSection} setActiveSection={handleSectionChange} />
+        
+        <div className="flex-1 flex flex-col">
+          <DashboardHeader />
+          
+          <main className="flex-1 p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Báo cáo</h1>
@@ -395,7 +411,9 @@ export default function Reports() {
             </Card>
           </TabsContent>
         </Tabs>
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

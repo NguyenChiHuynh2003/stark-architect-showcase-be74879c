@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderKanban, CheckSquare, FileText, Settings, LogOut, Building2, UserCog, Users, DollarSign, Package } from "lucide-react";
+import { LayoutDashboard, FolderKanban, CheckSquare, FileText, Settings, LogOut, Building2, UserCog, Users, DollarSign, Package, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +35,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
   const menuItems = [
     { id: "overview", label: "Tổng quan", icon: LayoutDashboard },
     { id: "projects", label: "Dự án", icon: FolderKanban },
+    { id: "closed-projects", label: "Dự án đóng", icon: Archive },
     { id: "tasks", label: "Nhiệm vụ", icon: CheckSquare },
     { id: "hr", label: "Nhân sự", icon: Users },
     { id: "accounting", label: "Kế toán", icon: DollarSign },
@@ -74,6 +75,8 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
                     navigate("/reports");
                   } else if (item.id === "settings") {
                     navigate("/settings");
+                  } else if (item.id === "closed-projects") {
+                    navigate("/closed-projects");
                   } else {
                     setActiveSection(item.id);
                     if (item.id !== "overview" && item.id !== "projects" && item.id !== "tasks" && item.id !== "admin-users" && item.id !== "hr" && item.id !== "accounting" && item.id !== "inventory") {

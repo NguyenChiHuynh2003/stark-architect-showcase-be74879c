@@ -85,6 +85,51 @@ export type Database = {
         }
         Relationships: []
       }
+      client_requirements: {
+        Row: {
+          assigned_to: string | null
+          completion_percentage: number | null
+          created_at: string
+          created_by: string
+          due_date: string | null
+          id: string
+          priority: string
+          project_id: string
+          requirement_description: string | null
+          requirement_title: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completion_percentage?: number | null
+          created_at?: string
+          created_by: string
+          due_date?: string | null
+          id?: string
+          priority?: string
+          project_id: string
+          requirement_description?: string | null
+          requirement_title: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completion_percentage?: number | null
+          created_at?: string
+          created_by?: string
+          due_date?: string | null
+          id?: string
+          priority?: string
+          project_id?: string
+          requirement_description?: string | null
+          requirement_title?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           created_at: string

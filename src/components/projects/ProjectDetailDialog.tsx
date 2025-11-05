@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { X, UserPlus, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ClientRequirementsTab } from "./ClientRequirementsTab";
+import { ProjectFollowersTab } from "./ProjectFollowersTab";
 
 interface ProjectDetailDialogProps {
   projectId: string;
@@ -158,10 +160,11 @@ export const ProjectDetailDialog = ({
         </DialogHeader>
 
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="info">Thông tin</TabsTrigger>
             <TabsTrigger value="members">Thành viên</TabsTrigger>
-            <TabsTrigger value="followers">Người theo dõi</TabsTrigger>
+            <TabsTrigger value="followers">Theo dõi</TabsTrigger>
+            <TabsTrigger value="requirements">Yêu cầu CĐT</TabsTrigger>
             <TabsTrigger value="materials">Hạng mục</TabsTrigger>
             <TabsTrigger value="kpi">KPI</TabsTrigger>
           </TabsList>
@@ -292,9 +295,11 @@ export const ProjectDetailDialog = ({
           </TabsContent>
 
           <TabsContent value="followers">
-            <div className="text-center py-8 text-muted-foreground">
-              Chưa có người theo dõi
-            </div>
+            <ProjectFollowersTab projectId={projectId} />
+          </TabsContent>
+
+          <TabsContent value="requirements">
+            <ClientRequirementsTab projectId={projectId} />
           </TabsContent>
 
           <TabsContent value="materials" className="space-y-4">

@@ -3,10 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Plus, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DollarSign, Plus, TrendingUp, TrendingDown, Wallet, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TransactionDialog } from "@/components/accounting/TransactionDialog";
 import { TransactionList } from "@/components/accounting/TransactionList";
+import { ContractsSection } from "@/components/accounting/ContractsSection";
 
 interface Transaction {
   id: string;
@@ -116,22 +118,40 @@ export const AccountingSection = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-6 h-6 text-primary" />
-              <div>
-                <CardTitle>Quản lý kế toán</CardTitle>
-                <CardDescription>Theo dõi thu chi, báo cáo tài chính</CardDescription>
+      <div>
+        <h2 className="text-2xl font-bold flex items-center gap-3">
+          <DollarSign className="w-6 h-6 text-primary" />
+          Quản lý kế toán
+        </h2>
+        <p className="text-muted-foreground">Theo dõi thu chi, báo cáo tài chính và hợp đồng</p>
+      </div>
+
+      <Tabs defaultValue="transactions" className="w-full">
+        <TabsList>
+          <TabsTrigger value="transactions">
+            <DollarSign className="w-4 h-4 mr-2" />
+            Giao dịch
+          </TabsTrigger>
+          <TabsTrigger value="contracts">
+            <FileText className="w-4 h-4 mr-2" />
+            Hợp đồng
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="transactions" className="mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Giao dịch thu chi</CardTitle>
+                  <CardDescription>Theo dõi các giao dịch tài chính</CardDescription>
+                </div>
+                <Button onClick={handleAddNew}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Thêm giao dịch
+                </Button>
               </div>
-            </div>
-            <Button onClick={handleAddNew}>
-              <Plus className="w-4 h-4 mr-2" />
-              Thêm giao dịch
-            </Button>
-          </div>
-        </CardHeader>
+            </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card>
@@ -208,15 +228,21 @@ export const AccountingSection = () => {
               onDelete={handleSuccess}
             />
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <TransactionDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        transaction={selectedTransaction}
-        onSuccess={handleSuccess}
-      />
+        <TransactionDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          transaction={selectedTransaction}
+          onSuccess={handleSuccess}
+        />
+      </TabsContent>
+
+      <TabsContent value="contracts" className="mt-6">
+        <ContractsSection />
+      </TabsContent>
+    </Tabs>
     </div>
   );
 };

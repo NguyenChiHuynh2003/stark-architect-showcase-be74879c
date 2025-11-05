@@ -130,6 +130,125 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_guarantees: {
+        Row: {
+          contract_id: string
+          created_at: string
+          expiry_date: string | null
+          guarantee_number: string | null
+          guarantee_type: string
+          guarantee_value: number
+          id: string
+          issue_date: string | null
+          issuing_bank: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          expiry_date?: string | null
+          guarantee_number?: string | null
+          guarantee_type: string
+          guarantee_value?: number
+          id?: string
+          issue_date?: string | null
+          issuing_bank?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          expiry_date?: string | null
+          guarantee_number?: string | null
+          guarantee_type?: string
+          guarantee_value?: number
+          id?: string
+          issue_date?: string | null
+          issuing_bank?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_guarantees_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          client_name: string
+          contract_number: string
+          contract_type: string
+          contract_value: number
+          created_at: string
+          created_by: string
+          effective_date: string | null
+          expiry_date: string | null
+          id: string
+          is_appendix: boolean
+          parent_contract_id: string | null
+          payment_value: number
+          project_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          contract_number: string
+          contract_type?: string
+          contract_value?: number
+          created_at?: string
+          created_by: string
+          effective_date?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_appendix?: boolean
+          parent_contract_id?: string | null
+          payment_value?: number
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          contract_number?: string
+          contract_type?: string
+          contract_value?: number
+          created_at?: string
+          created_by?: string
+          effective_date?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_appendix?: boolean
+          parent_contract_id?: string | null
+          payment_value?: number
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_parent_contract_id_fkey"
+            columns: ["parent_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           created_at: string

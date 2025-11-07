@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContractsList } from "./ContractsList";
+import { GuaranteesList } from "./GuaranteesList";
 
 export function ContractsSection() {
   return (
@@ -27,21 +28,15 @@ export function ContractsSection() {
         </TabsContent>
 
         <TabsContent value="contract_guarantee" className="mt-6">
-          <div className="text-center py-8 text-muted-foreground">
-            Bảo lãnh hợp đồng - Sẽ phát triển thêm
-          </div>
+          <GuaranteesList guaranteeType="Bảo lãnh hợp đồng" />
         </TabsContent>
 
         <TabsContent value="advance_guarantee" className="mt-6">
-          <div className="text-center py-8 text-muted-foreground">
-            Bảo lãnh tạm ứng - Sẽ phát triển thêm
-          </div>
+          <GuaranteesList guaranteeType="Bảo lãnh tạm ứng" />
         </TabsContent>
 
         <TabsContent value="warranty_guarantee" className="mt-6">
-          <div className="text-center py-8 text-muted-foreground">
-            Bảo lãnh bảo hành - Sẽ phát triển thêm
-          </div>
+          <GuaranteesList guaranteeType="Bảo lãnh bảo hành" />
         </TabsContent>
       </Tabs>
     </div>

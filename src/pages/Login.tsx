@@ -4,24 +4,49 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+
+const STORAGE_KEY = "remembered_login";
 
 const Login = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
+    
+    // Load saved credentials
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const { loginId: savedLoginId, password: savedPassword } = JSON.parse(saved);
+        setLoginId(savedLoginId || "");
+        setPassword(savedPassword || "");
+        setRememberMe(true);
+      } catch (error) {
+        console.error("Failed to load saved credentials");
+      }
+    }
   }, [user, navigate]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Save or clear credentials
+    if (rememberMe) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ loginId, password }));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    
     navigate("/auth");
   };
 
@@ -71,6 +96,19 @@ const Login = () => {
                 />
               </div>
 
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <Label
+                  htmlFor="remember"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Ghi nhớ tài khoản
+                </Label>
+              </div>
 
               <Button
                 type="submit"

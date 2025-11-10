@@ -22,6 +22,7 @@ interface Employee {
   phone: string | null;
   employee_card_photo_url: string | null;
   id_card_photo_url: string | null;
+  certificate_expiry_date: string | null;
 }
 
 export const EmployeeList = () => {

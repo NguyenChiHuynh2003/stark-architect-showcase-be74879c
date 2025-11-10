@@ -251,6 +251,7 @@ export type Database = {
       }
       employees: {
         Row: {
+          certificate_expiry_date: string | null
           created_at: string
           date_joined: string
           date_of_birth: string | null
@@ -265,6 +266,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          certificate_expiry_date?: string | null
           created_at?: string
           date_joined?: string
           date_of_birth?: string | null
@@ -279,6 +281,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          certificate_expiry_date?: string | null
           created_at?: string
           date_joined?: string
           date_of_birth?: string | null
@@ -410,6 +413,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          reference_id: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          reference_id?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          reference_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       product_categories: {
         Row: {

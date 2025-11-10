@@ -18,6 +18,7 @@ interface Employee {
   phone: string | null;
   employee_card_photo_url: string | null;
   id_card_photo_url: string | null;
+  certificate_expiry_date: string | null;
 }
 
 interface EmployeeDialogProps {
@@ -38,6 +39,7 @@ export const EmployeeDialog = ({ open, onOpenChange, employee, onSuccess }: Empl
     phone: "",
     email: "",
     password: "",
+    certificate_expiry_date: "",
   });
   const [employeeCardFile, setEmployeeCardFile] = useState<File | null>(null);
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
@@ -54,6 +56,7 @@ export const EmployeeDialog = ({ open, onOpenChange, employee, onSuccess }: Empl
         phone: employee.phone || "",
         email: "",
         password: "",
+        certificate_expiry_date: employee.certificate_expiry_date || "",
       });
     } else {
       setFormData({
@@ -65,6 +68,7 @@ export const EmployeeDialog = ({ open, onOpenChange, employee, onSuccess }: Empl
         phone: "",
         email: "",
         password: "",
+        certificate_expiry_date: "",
       });
     }
   }, [employee]);
@@ -137,6 +141,7 @@ export const EmployeeDialog = ({ open, onOpenChange, employee, onSuccess }: Empl
         phone: formData.phone || null,
         employee_card_photo_url: employeeCardUrl,
         id_card_photo_url: idCardUrl,
+        certificate_expiry_date: formData.certificate_expiry_date || null,
       };
 
       if (employee) {
@@ -228,6 +233,15 @@ export const EmployeeDialog = ({ open, onOpenChange, employee, onSuccess }: Empl
                 id="department"
                 value={formData.department}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="certificate_expiry_date">Ngày hết hạn bằng cấp</Label>
+              <Input
+                id="certificate_expiry_date"
+                type="date"
+                value={formData.certificate_expiry_date}
+                onChange={(e) => setFormData({ ...formData, certificate_expiry_date: e.target.value })}
               />
             </div>
 

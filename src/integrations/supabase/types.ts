@@ -61,6 +61,237 @@ export type Database = {
           },
         ]
       }
+      asset_allocations: {
+        Row: {
+          actual_return_date: string | null
+          allocated_by: string
+          allocated_to: string
+          allocation_date: string
+          asset_master_id: string
+          created_at: string
+          expected_return_date: string | null
+          id: string
+          project_id: string | null
+          purpose: string
+          return_condition: string | null
+          reusability_percentage: number | null
+          status: Database["public"]["Enums"]["handover_status"]
+          updated_at: string
+        }
+        Insert: {
+          actual_return_date?: string | null
+          allocated_by: string
+          allocated_to: string
+          allocation_date?: string
+          asset_master_id: string
+          created_at?: string
+          expected_return_date?: string | null
+          id?: string
+          project_id?: string | null
+          purpose: string
+          return_condition?: string | null
+          reusability_percentage?: number | null
+          status?: Database["public"]["Enums"]["handover_status"]
+          updated_at?: string
+        }
+        Update: {
+          actual_return_date?: string | null
+          allocated_by?: string
+          allocated_to?: string
+          allocation_date?: string
+          asset_master_id?: string
+          created_at?: string
+          expected_return_date?: string | null
+          id?: string
+          project_id?: string | null
+          purpose?: string
+          return_condition?: string | null
+          reusability_percentage?: number | null
+          status?: Database["public"]["Enums"]["handover_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_allocations_asset_master_id_fkey"
+            columns: ["asset_master_id"]
+            isOneToOne: false
+            referencedRelation: "asset_master_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_allocations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_disposals: {
+        Row: {
+          approved_by: string | null
+          asset_master_id: string
+          created_at: string
+          disposal_date: string
+          disposal_reason: string
+          gain_loss: number | null
+          id: string
+          nbv_at_disposal: number
+          notes: string | null
+          sale_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          asset_master_id: string
+          created_at?: string
+          disposal_date?: string
+          disposal_reason: string
+          gain_loss?: number | null
+          id?: string
+          nbv_at_disposal?: number
+          notes?: string | null
+          sale_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          asset_master_id?: string
+          created_at?: string
+          disposal_date?: string
+          disposal_reason?: string
+          gain_loss?: number | null
+          id?: string
+          nbv_at_disposal?: number
+          notes?: string | null
+          sale_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_disposals_asset_master_id_fkey"
+            columns: ["asset_master_id"]
+            isOneToOne: false
+            referencedRelation: "asset_master_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_location_history: {
+        Row: {
+          asset_master_id: string
+          id: string
+          location: string
+          moved_by: string | null
+          notes: string | null
+          timestamp: string
+        }
+        Insert: {
+          asset_master_id: string
+          id?: string
+          location: string
+          moved_by?: string | null
+          notes?: string | null
+          timestamp?: string
+        }
+        Update: {
+          asset_master_id?: string
+          id?: string
+          location?: string
+          moved_by?: string | null
+          notes?: string | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_location_history_asset_master_id_fkey"
+            columns: ["asset_master_id"]
+            isOneToOne: false
+            referencedRelation: "asset_master_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_master_data: {
+        Row: {
+          accumulated_depreciation: number | null
+          activation_date: string | null
+          amortization_period_months: number | null
+          asset_id: string
+          asset_name: string
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          cost_basis: number
+          cost_center: string
+          created_at: string
+          created_by: string
+          current_status: Database["public"]["Enums"]["asset_status"]
+          depreciation_method:
+            | Database["public"]["Enums"]["depreciation_method"]
+            | null
+          id: string
+          inventory_item_id: string | null
+          nbv: number | null
+          sku: string
+          total_maintenance_cost: number | null
+          updated_at: string
+          useful_life_months: number | null
+        }
+        Insert: {
+          accumulated_depreciation?: number | null
+          activation_date?: string | null
+          amortization_period_months?: number | null
+          asset_id: string
+          asset_name: string
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          cost_basis?: number
+          cost_center: string
+          created_at?: string
+          created_by: string
+          current_status?: Database["public"]["Enums"]["asset_status"]
+          depreciation_method?:
+            | Database["public"]["Enums"]["depreciation_method"]
+            | null
+          id?: string
+          inventory_item_id?: string | null
+          nbv?: number | null
+          sku: string
+          total_maintenance_cost?: number | null
+          updated_at?: string
+          useful_life_months?: number | null
+        }
+        Update: {
+          accumulated_depreciation?: number | null
+          activation_date?: string | null
+          amortization_period_months?: number | null
+          asset_id?: string
+          asset_name?: string
+          asset_type?: Database["public"]["Enums"]["asset_type"]
+          cost_basis?: number
+          cost_center?: string
+          created_at?: string
+          created_by?: string
+          current_status?: Database["public"]["Enums"]["asset_status"]
+          depreciation_method?:
+            | Database["public"]["Enums"]["depreciation_method"]
+            | null
+          id?: string
+          inventory_item_id?: string | null
+          nbv?: number | null
+          sku?: string
+          total_maintenance_cost?: number | null
+          updated_at?: string
+          useful_life_months?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_master_data_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           created_at: string
@@ -249,6 +480,47 @@ export type Database = {
           },
         ]
       }
+      depreciation_schedules: {
+        Row: {
+          accumulated_depreciation: number
+          asset_master_id: string
+          created_at: string
+          depreciation_amount: number
+          id: string
+          is_processed: boolean | null
+          nbv: number
+          period_date: string
+        }
+        Insert: {
+          accumulated_depreciation?: number
+          asset_master_id: string
+          created_at?: string
+          depreciation_amount?: number
+          id?: string
+          is_processed?: boolean | null
+          nbv?: number
+          period_date: string
+        }
+        Update: {
+          accumulated_depreciation?: number
+          asset_master_id?: string
+          created_at?: string
+          depreciation_amount?: number
+          id?: string
+          is_processed?: boolean | null
+          nbv?: number
+          period_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "depreciation_schedules_asset_master_id_fkey"
+            columns: ["asset_master_id"]
+            isOneToOne: false
+            referencedRelation: "asset_master_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           certificate_expiry_date: string | null
@@ -296,6 +568,125 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      goods_receipt_notes: {
+        Row: {
+          created_at: string
+          created_by: string
+          grn_number: string
+          id: string
+          notes: string | null
+          receipt_date: string
+          supplier: string | null
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          grn_number: string
+          id?: string
+          notes?: string | null
+          receipt_date?: string
+          supplier?: string | null
+          total_value?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          grn_number?: string
+          id?: string
+          notes?: string | null
+          receipt_date?: string
+          supplier?: string | null
+          total_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      grn_items: {
+        Row: {
+          asset_master_id: string
+          created_at: string
+          grn_id: string
+          id: string
+          quantity: number
+          total_cost: number
+          unit_cost: number
+        }
+        Insert: {
+          asset_master_id: string
+          created_at?: string
+          grn_id: string
+          id?: string
+          quantity?: number
+          total_cost?: number
+          unit_cost?: number
+        }
+        Update: {
+          asset_master_id?: string
+          created_at?: string
+          grn_id?: string
+          id?: string
+          quantity?: number
+          total_cost?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grn_items_asset_master_id_fkey"
+            columns: ["asset_master_id"]
+            isOneToOne: false
+            referencedRelation: "asset_master_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grn_items_grn_id_fkey"
+            columns: ["grn_id"]
+            isOneToOne: false
+            referencedRelation: "goods_receipt_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      handover_slips: {
+        Row: {
+          allocation_id: string
+          created_at: string
+          handover_timestamp: string
+          id: string
+          location: string | null
+          notes: string | null
+          slip_number: string
+        }
+        Insert: {
+          allocation_id: string
+          created_at?: string
+          handover_timestamp?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          slip_number: string
+        }
+        Update: {
+          allocation_id?: string
+          created_at?: string
+          handover_timestamp?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          slip_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_slips_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "asset_allocations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_items: {
         Row: {
@@ -366,6 +757,56 @@ export type Database = {
             columns: ["product_group_id"]
             isOneToOne: false
             referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_records: {
+        Row: {
+          asset_master_id: string
+          cost: number
+          created_at: string
+          description: string | null
+          id: string
+          maintenance_date: string
+          maintenance_type: string
+          performed_by: string | null
+          reported_by: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          asset_master_id: string
+          cost?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          maintenance_date?: string
+          maintenance_type: string
+          performed_by?: string | null
+          reported_by?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          asset_master_id?: string
+          cost?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          maintenance_date?: string
+          maintenance_type?: string
+          performed_by?: string | null
+          reported_by?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_records_asset_master_id_fkey"
+            columns: ["asset_master_id"]
+            isOneToOne: false
+            referencedRelation: "asset_master_data"
             referencedColumns: ["id"]
           },
         ]
@@ -685,7 +1126,20 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      asset_status:
+        | "in_stock"
+        | "active"
+        | "allocated"
+        | "under_maintenance"
+        | "ready_for_reallocation"
+        | "disposed"
+      asset_type: "equipment" | "tools" | "materials"
       business_type: "wholesale" | "retail" | "both"
+      depreciation_method:
+        | "straight_line"
+        | "declining_balance"
+        | "units_of_production"
+      handover_status: "active" | "returned" | "overdue"
       project_status: "planning" | "in_progress" | "completed" | "on_hold"
       task_status: "pending" | "in_progress" | "completed" | "overdue"
     }
@@ -816,7 +1270,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      asset_status: [
+        "in_stock",
+        "active",
+        "allocated",
+        "under_maintenance",
+        "ready_for_reallocation",
+        "disposed",
+      ],
+      asset_type: ["equipment", "tools", "materials"],
       business_type: ["wholesale", "retail", "both"],
+      depreciation_method: [
+        "straight_line",
+        "declining_balance",
+        "units_of_production",
+      ],
+      handover_status: ["active", "returned", "overdue"],
       project_status: ["planning", "in_progress", "completed", "on_hold"],
       task_status: ["pending", "in_progress", "completed", "overdue"],
     },

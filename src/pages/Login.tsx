@@ -24,16 +24,15 @@ const Login = () => {
       navigate("/dashboard");
     }
     
-    // Load saved credentials
+    // Load saved username only (never store passwords)
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        const { loginId: savedLoginId, password: savedPassword } = JSON.parse(saved);
+        const { loginId: savedLoginId } = JSON.parse(saved);
         setLoginId(savedLoginId || "");
-        setPassword(savedPassword || "");
         setRememberMe(true);
       } catch (error) {
-        console.error("Failed to load saved credentials");
+        console.error("Failed to load saved username");
       }
     }
   }, [user, navigate]);
@@ -41,9 +40,9 @@ const Login = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Save or clear credentials
+    // Save or clear username only (never store passwords)
     if (rememberMe) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ loginId, password }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ loginId }));
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }

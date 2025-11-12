@@ -8,46 +8,77 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Building2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
 
 const STORAGE_KEY = "remembered_login";
+
+const signInSchema = z.object({
+  email: z.string().trim().email("Email không hợp lệ"),
+  password: z.string().min(1, "Vui lòng nhập mật khẩu"),
+});
 
 const Login = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [loginId, setLoginId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
     
-    // Load saved username only (never store passwords)
+    // Load saved email only (never store passwords)
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        const { loginId: savedLoginId } = JSON.parse(saved);
-        setLoginId(savedLoginId || "");
+        const { email: savedEmail } = JSON.parse(saved);
+        setEmail(savedEmail || "");
         setRememberMe(true);
       } catch (error) {
-        console.error("Failed to load saved username");
+        console.error("Failed to load saved email");
       }
     }
   }, [user, navigate]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Save or clear username only (never store passwords)
-    if (rememberMe) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ loginId }));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
+    try {
+      const validatedData = signInSchema.parse({ email, password });
+      setLoading(true);
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: validatedData.email,
+        password: validatedData.password,
+      });
+
+      if (error) throw error;
+
+      // Save or clear email only (never store passwords)
+      if (rememberMe) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ email }));
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+
+      toast.success("Đăng nhập thành công!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else if (error.message?.includes("Invalid login credentials")) {
+        toast.error("Email hoặc mật khẩu không đúng");
+      } else {
+        toast.error(error.message || "Có lỗi xảy ra khi đăng nhập");
+      }
+    } finally {
+      setLoading(false);
     }
-    
-    navigate("/auth");
   };
 
   return (
@@ -69,16 +100,17 @@ const Login = () => {
           <CardContent className="pt-6">
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="loginId" className="text-sm font-medium">
-                  MÃ ĐĂNG NHẬP
+                <Label htmlFor="email" className="text-sm font-medium">
+                  EMAIL
                 </Label>
                 <Input
-                  id="loginId"
-                  type="text"
-                  value={loginId}
-                  onChange={(e) => setLoginId(e.target.value)}
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full"
-                  placeholder="Nhập mã đăng nhập"
+                  placeholder="email@example.com"
+                  required
                 />
               </div>
 
@@ -93,7 +125,8 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pr-10"
-                    placeholder="Nhập mật khẩu"
+                    placeholder="••••••••"
+                    required
                   />
                   <button
                     type="button"
@@ -127,8 +160,9 @@ const Login = () => {
               <Button
                 type="submit"
                 className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-6 text-base"
+                disabled={loading}
               >
-                ĐĂNG NHẬP
+                {loading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP"}
               </Button>
             </form>
           </CardContent>

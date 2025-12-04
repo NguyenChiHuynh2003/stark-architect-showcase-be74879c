@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw, Plus, ArrowLeft } from "lucide-react";
+import { RefreshCw, Plus, ArrowLeft, Download } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,9 +12,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { AssetAllocationDialog } from "./AssetAllocationDialog";
+import * as XLSX from "xlsx";
 
 interface AssetAllocation {
   id: string;
@@ -40,6 +48,7 @@ export function AssetAllocationList() {
   const [allocations, setAllocations] = useState<AssetAllocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState<AssetAllocation | null>(null);
@@ -69,11 +78,45 @@ export function AssetAllocationList() {
     fetchAllocations();
   }, []);
 
-  const filteredAllocations = allocations.filter((allocation) =>
-    Object.values(allocation).some((value) =>
+  const filteredAllocations = allocations.filter((allocation) => {
+    const matchesSearch = Object.values(allocation).some((value) =>
       String(value).toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+    );
+    const matchesStatus = statusFilter === "all" || allocation.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const exportToExcel = () => {
+    const exportData = filteredAllocations.map((allocation) => ({
+      "Mã Tài sản": allocation.asset_master_data?.asset_id || "",
+      "Tên Tài sản": allocation.asset_master_data?.asset_name || "",
+      "Người sử dụng": allocation.allocated_to_profile?.full_name || "",
+      "Mục đích": allocation.purpose,
+      "Ngày phân bổ": format(new Date(allocation.allocation_date), "dd/MM/yyyy"),
+      "Hạn hoàn trả": allocation.expected_return_date
+        ? format(new Date(allocation.expected_return_date), "dd/MM/yyyy")
+        : "",
+      "Ngày hoàn trả thực tế": allocation.actual_return_date
+        ? format(new Date(allocation.actual_return_date), "dd/MM/yyyy")
+        : "",
+      "Trạng thái": getStatusLabel(allocation.status),
+      "Tình trạng hoàn trả": allocation.return_condition || "",
+      "% Tái sử dụng": allocation.reusability_percentage ?? "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Phân bổ tài sản");
+    
+    // Auto-size columns
+    const colWidths = Object.keys(exportData[0] || {}).map((key) => ({
+      wch: Math.max(key.length, 15),
+    }));
+    ws["!cols"] = colWidths;
+
+    XLSX.writeFile(wb, `Phan_bo_tai_san_${format(new Date(), "dd-MM-yyyy")}.xlsx`);
+    toast.success("Xuất file Excel thành công!");
+  };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -108,15 +151,35 @@ export function AssetAllocationList() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-1 w-full sm:w-auto">
+        <div className="flex flex-1 gap-2 w-full sm:w-auto">
           <Input
             placeholder="Tìm kiếm phân bổ tài sản..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full"
+            className="flex-1"
           />
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Lọc trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectItem value="active">Đang sử dụng</SelectItem>
+              <SelectItem value="returned">Đã hoàn trả</SelectItem>
+              <SelectItem value="overdue">Quá hạn</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={exportToExcel}
+            variant="outline"
+            size="sm"
+            disabled={filteredAllocations.length === 0}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Xuất Excel
+          </Button>
           <Button
             onClick={fetchAllocations}
             variant="outline"

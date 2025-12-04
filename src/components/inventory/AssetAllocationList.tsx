@@ -56,17 +56,44 @@ export function AssetAllocationList() {
   const fetchAllocations = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch allocations with asset data
+      const { data: allocationsData, error: allocationsError } = await supabase
         .from("asset_allocations")
         .select(`
           *,
-          asset_master_data(asset_id, asset_name),
-          allocated_to_profile:profiles!asset_allocations_allocated_to_fkey(full_name)
+          asset_master_data(asset_id, asset_name)
         `)
         .order("allocation_date", { ascending: false });
 
-      if (error) throw error;
-      setAllocations((data as any) || []);
+      if (allocationsError) throw allocationsError;
+
+      // Get unique user IDs
+      const userIds = [...new Set((allocationsData || []).map(a => a.allocated_to))];
+      
+      // Fetch profiles for those users
+      let profilesMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", userIds);
+        
+        profilesMap = (profilesData || []).reduce((acc, p) => {
+          acc[p.id] = p.full_name;
+          return acc;
+        }, {} as Record<string, string>);
+      }
+
+      // Merge allocations with profile names
+      const allocationsWithProfiles = (allocationsData || []).map(allocation => ({
+        ...allocation,
+        allocated_to_profile: profilesMap[allocation.allocated_to] 
+          ? { full_name: profilesMap[allocation.allocated_to] }
+          : null
+      }));
+
+      setAllocations(allocationsWithProfiles as any);
     } catch (error: any) {
       toast.error("Lỗi tải dữ liệu: " + error.message);
     } finally {

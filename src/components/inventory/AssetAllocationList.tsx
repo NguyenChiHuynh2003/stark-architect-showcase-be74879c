@@ -52,7 +52,7 @@ export function AssetAllocationList() {
         .select(`
           *,
           asset_master_data(asset_id, asset_name),
-          allocated_to_profile:profiles!allocated_to(full_name)
+          allocated_to_profile:profiles!asset_allocations_allocated_to_fkey(full_name)
         `)
         .order("allocation_date", { ascending: false });
 

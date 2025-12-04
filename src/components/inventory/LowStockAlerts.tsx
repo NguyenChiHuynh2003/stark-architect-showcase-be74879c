@@ -79,9 +79,8 @@ export function LowStockAlerts() {
     const { data, error } = await supabase
       .from("asset_allocations")
       .select(`
-        id, expected_return_date, purpose,
-        asset_master_data(asset_id, asset_name),
-        allocated_to_profile:profiles!allocated_to(full_name)
+        id, expected_return_date, purpose, allocated_to,
+        asset_master_data(asset_id, asset_name)
       `)
       .eq("status", "active")
       .not("expected_return_date", "is", null)
@@ -92,7 +91,29 @@ export function LowStockAlerts() {
       return;
     }
 
-    setOverdueAllocations((data as any) || []);
+    // Fetch profile names
+    const userIds = [...new Set((data || []).map(a => a.allocated_to))];
+    let profilesMap: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+      
+      profilesMap = (profilesData || []).reduce((acc, p) => {
+        acc[p.id] = p.full_name;
+        return acc;
+      }, {} as Record<string, string>);
+    }
+
+    const allocationsWithProfiles = (data || []).map(allocation => ({
+      ...allocation,
+      allocated_to_profile: profilesMap[allocation.allocated_to] 
+        ? { full_name: profilesMap[allocation.allocated_to] }
+        : null
+    }));
+
+    setOverdueAllocations(allocationsWithProfiles as any);
 
     // Update status to overdue
     for (const allocation of data || []) {

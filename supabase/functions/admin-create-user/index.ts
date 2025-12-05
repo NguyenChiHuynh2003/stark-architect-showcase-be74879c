@@ -47,7 +47,7 @@ serve(async (req) => {
       throw new Error("Unauthorized: Admin access required");
     }
 
-    const { email, password, fullName } = await req.json();
+    const { email, password, fullName, role } = await req.json();
 
     // Create user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -61,6 +61,18 @@ serve(async (req) => {
 
     if (createError) throw createError;
 
+    // Update user role if specified (not default 'user')
+    if (role && role !== 'user' && newUser.user) {
+      const { error: roleError } = await supabaseAdmin
+        .from("user_roles")
+        .update({ role })
+        .eq("user_id", newUser.user.id);
+      
+      if (roleError) {
+        console.error("Error updating role:", roleError);
+      }
+    }
+
     return new Response(
       JSON.stringify({ user: newUser }),
       {
@@ -69,6 +81,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error("Error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       {

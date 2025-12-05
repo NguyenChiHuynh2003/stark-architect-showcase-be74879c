@@ -2,48 +2,33 @@ import { LayoutDashboard, FolderKanban, CheckSquare, FileText, Settings, LogOut,
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useUserRole, roleLabels } from "@/hooks/useUserRole";
 
 interface SidebarProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
 }
 
+const allMenuItems = [
+  { id: "overview", label: "Tổng quan", icon: LayoutDashboard },
+  { id: "projects", label: "Dự án", icon: FolderKanban },
+  { id: "closed-projects", label: "Dự án đóng", icon: Archive },
+  { id: "tasks", label: "Nhiệm vụ", icon: CheckSquare },
+  { id: "hr", label: "Nhân sự", icon: Users },
+  { id: "accounting", label: "Kế toán", icon: DollarSign },
+  { id: "inventory", label: "Quản lí kho", icon: Package },
+  { id: "reports", label: "Báo cáo", icon: FileText },
+  { id: "settings", label: "Cài đặt", icon: Settings },
+  { id: "admin-users", label: "Quản lý người dùng", icon: UserCog },
+];
+
 export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { signOut } = useAuth();
+  const { role, hasAccess, loading } = useUserRole();
 
-  useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!user) return;
-      
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      
-      setIsAdmin(!!data);
-    };
-    
-    checkAdminRole();
-  }, [user]);
-
-  const menuItems = [
-    { id: "overview", label: "Tổng quan", icon: LayoutDashboard },
-    { id: "projects", label: "Dự án", icon: FolderKanban },
-    { id: "closed-projects", label: "Dự án đóng", icon: Archive },
-    { id: "tasks", label: "Nhiệm vụ", icon: CheckSquare },
-    { id: "hr", label: "Nhân sự", icon: Users },
-    { id: "accounting", label: "Kế toán", icon: DollarSign },
-    { id: "inventory", label: "Quản lí kho", icon: Package },
-    { id: "reports", label: "Báo cáo", icon: FileText },
-    { id: "settings", label: "Cài đặt", icon: Settings },
-    ...(isAdmin ? [{ id: "admin-users", label: "Quản lý người dùng", icon: UserCog }] : []),
-  ];
+  // Filter menu items based on role permissions
+  const menuItems = allMenuItems.filter(item => hasAccess(item.id));
 
   const handleLogout = async () => {
     await signOut();
@@ -65,6 +50,13 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
         </div>
       </div>
 
+      {/* Show current role */}
+      {!loading && (
+        <div className="px-6 py-2 border-b border-sidebar-border">
+          <p className="text-xs text-sidebar-foreground/50">Vai trò: <span className="font-medium text-sidebar-foreground/70">{roleLabels[role]}</span></p>
+        </div>
+      )}
+
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
           {menuItems.map((item) => (
@@ -79,9 +71,6 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
                     navigate("/closed-projects");
                   } else {
                     setActiveSection(item.id);
-                    if (item.id !== "overview" && item.id !== "projects" && item.id !== "tasks" && item.id !== "admin-users" && item.id !== "hr" && item.id !== "accounting" && item.id !== "inventory") {
-                      toast.info(`Mục ${item.label} sắp ra mắt!`);
-                    }
                   }
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${

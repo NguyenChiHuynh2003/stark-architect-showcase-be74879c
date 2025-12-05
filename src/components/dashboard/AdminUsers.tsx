@@ -40,23 +40,35 @@ export const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data: profiles, error } = await supabase
+      // Fetch profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select(`
-          id,
-          full_name,
-          user_roles (role)
-        `)
+        .select("id, full_name")
         .order("full_name");
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      // Fetch emails from auth metadata (requires admin privileges)
-      const usersWithRoles = profiles?.map((profile: any) => ({
+      // Fetch user roles separately
+      const userIds = (profiles || []).map(p => p.id);
+      let rolesMap: Record<string, string> = {};
+      
+      if (userIds.length > 0) {
+        const { data: rolesData } = await supabase
+          .from("user_roles")
+          .select("user_id, role")
+          .in("user_id", userIds);
+        
+        rolesMap = (rolesData || []).reduce((acc, r) => {
+          acc[r.user_id] = r.role;
+          return acc;
+        }, {} as Record<string, string>);
+      }
+
+      const usersWithRoles = (profiles || []).map(profile => ({
         id: profile.id,
         full_name: profile.full_name,
-        role: profile.user_roles?.[0]?.role || "user",
-      })) || [];
+        role: rolesMap[profile.id] || "user",
+      }));
 
       setUsers(usersWithRoles);
     } catch (error: any) {

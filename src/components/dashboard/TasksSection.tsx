@@ -76,17 +76,32 @@ export const TasksSection = () => {
 
   const fetchTasks = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch tasks with projects
+      const { data: tasksData, error: tasksError } = await supabase
         .from("tasks")
         .select(`
           *,
-          projects!tasks_project_id_fkey (name),
-          profiles!tasks_assigned_to_fkey (full_name)
+          projects!tasks_project_id_fkey (name)
         `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setTasks(data as any || []);
+      if (tasksError) throw tasksError;
+
+      // Fetch profiles separately
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, full_name");
+
+      // Merge tasks with profiles
+      const tasksWithProfiles = (tasksData || []).map(task => {
+        const profile = profilesData?.find(p => p.id === task.assigned_to);
+        return {
+          ...task,
+          profiles: profile ? { full_name: profile.full_name } : null
+        };
+      });
+
+      setTasks(tasksWithProfiles as any);
     } catch (error: any) {
       toast({
         title: "Lỗi",
@@ -114,16 +129,29 @@ export const TasksSection = () => {
 
   const fetchTeamMembers = async (projectId: string) => {
     try {
-      const { data, error } = await supabase
+      // Fetch team members
+      const { data: membersData, error: membersError } = await supabase
         .from("team_members")
-        .select(`
-          user_id,
-          profiles!team_members_user_id_fkey (full_name)
-        `)
+        .select("user_id")
         .eq("project_id", projectId);
 
-      if (error) throw error;
-      setTeamMembers(data as any || []);
+      if (membersError) throw membersError;
+
+      // Fetch profiles separately
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, full_name");
+
+      // Merge team members with profiles
+      const membersWithProfiles = (membersData || []).map(member => {
+        const profile = profilesData?.find(p => p.id === member.user_id);
+        return {
+          user_id: member.user_id,
+          profiles: { full_name: profile?.full_name || "Unknown" }
+        };
+      });
+
+      setTeamMembers(membersWithProfiles);
     } catch (error: any) {
       console.error("Error fetching team members:", error);
     }

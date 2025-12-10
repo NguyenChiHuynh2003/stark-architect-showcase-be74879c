@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Plus, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { InventoryItemDialog } from "./InventoryItemDialog";
+import { ExportButtons } from "@/components/ExportButtons";
+import { exportToExcel, exportToPDF, inventoryExportConfig } from "@/lib/exportUtils";
 
 interface InventoryItem {
   id: string;
@@ -74,6 +76,20 @@ export const InventoryList = () => {
     fetchItems();
   };
 
+  const handleExportInventory = (format: "excel" | "pdf") => {
+    const options = {
+      title: "Báo cáo Tồn kho Vật tư",
+      filename: "bao_cao_ton_kho",
+      ...inventoryExportConfig,
+      data: filteredItems,
+      summary: [
+        { label: "Tổng sản phẩm", value: filteredItems.length.toString() },
+        { label: "Tổng tồn kho", value: filteredItems.reduce((s, i) => s + Number(i.stock_quantity || 0), 0).toString() },
+      ],
+    };
+    format === "excel" ? exportToExcel(options) : exportToPDF(options);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -82,12 +98,17 @@ export const InventoryList = () => {
           <Input
             placeholder="Tìm kiếm hàng hóa"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={✉️ => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <ExportButtons
+            onExportExcel={() => handleExportInventory("excel")}
+            onExportPDF={() => handleExportInventory("pdf")}
+            disabled={loading || filteredItems.length === 0}
+          />
           <Button variant="outline" size="sm" onClick={fetchItems}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Tải lại
@@ -131,7 +152,7 @@ export const InventoryList = () => {
                   <TableCell className="text-right">{item.retail_price?.toLocaleString() || 0}</TableCell>
                   <TableCell className="text-right font-semibold">{item.stock_quantity || 0}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={(e) => {
+                    <Button variant="outline" size="sm" onClick={✉️ => {
                       e.stopPropagation();
                       handleEdit(item);
                     }}>

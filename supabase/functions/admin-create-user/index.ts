@@ -6,6 +6,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation functions
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return typeof email === 'string' && email.length > 0 && email.length <= 255 && emailRegex.test(email);
+}
+
+function isValidPassword(password: string): boolean {
+  return typeof password === 'string' && password.length >= 6 && password.length <= 128;
+}
+
+function isValidName(name: string): boolean {
+  return typeof name === 'string' && name.trim().length > 0 && name.length <= 100;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -48,6 +62,17 @@ serve(async (req) => {
     }
 
     const { email, password, fullName, role } = await req.json();
+
+    // Validate inputs
+    if (!isValidEmail(email)) {
+      throw new Error("Invalid email format");
+    }
+    if (!isValidPassword(password)) {
+      throw new Error("Password must be between 6 and 128 characters");
+    }
+    if (!isValidName(fullName)) {
+      throw new Error("Full name is required and must be less than 100 characters");
+    }
 
     // Create user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({

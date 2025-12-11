@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderKanban, CheckSquare, Users, AlertCircle, FileText, TrendingUp, Loader2, Package } from "lucide-react";
+import { FolderKanban, CheckSquare, Users, AlertCircle, FileText, TrendingUp, Loader2, Package, Clock, ListTodo, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface DashboardStats {
@@ -10,6 +10,14 @@ interface DashboardStats {
   totalEmployees: number;
   overdueItems: number;
   totalInventoryItems: number;
+}
+
+interface TaskStats {
+  inProgressTasks: number;
+  pendingTasks: number;
+  completedTasks: number;
+  totalTasks: number;
+  completionRate: number;
 }
 
 interface ProjectWithItems {
@@ -32,6 +40,13 @@ export const OverviewSection = () => {
     overdueItems: 0,
     totalInventoryItems: 0,
   });
+  const [taskStats, setTaskStats] = useState<TaskStats>({
+    inProgressTasks: 0,
+    pendingTasks: 0,
+    completedTasks: 0,
+    totalTasks: 0,
+    completionRate: 0,
+  });
   const [projects, setProjects] = useState<ProjectWithItems[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,12 +63,26 @@ export const OverviewSection = () => {
         .in("status", ["planning", "in_progress"]);
       if (projectsError) throw projectsError;
 
-      // Fetch pending tasks count
-      const { data: pendingTasksData, error: tasksError } = await supabase
+      // Fetch all tasks for statistics
+      const { data: allTasksData, error: allTasksError } = await supabase
         .from("tasks")
-        .select("id")
-        .eq("status", "pending");
-      if (tasksError) throw tasksError;
+        .select("id, status");
+      if (allTasksError) throw allTasksError;
+
+      // Calculate task statistics
+      const inProgressCount = allTasksData?.filter(t => t.status === "in_progress").length || 0;
+      const pendingCount = allTasksData?.filter(t => t.status === "pending").length || 0;
+      const completedCount = allTasksData?.filter(t => t.status === "completed").length || 0;
+      const totalCount = allTasksData?.length || 0;
+      const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+      setTaskStats({
+        inProgressTasks: inProgressCount,
+        pendingTasks: pendingCount,
+        completedTasks: completedCount,
+        totalTasks: totalCount,
+        completionRate,
+      });
 
       // Fetch total employees
       const { data: employeesData, error: employeesError } = await supabase
@@ -78,7 +107,7 @@ export const OverviewSection = () => {
 
       setStats({
         activeProjects: activeProjectsData?.length || 0,
-        pendingTasks: pendingTasksData?.length || 0,
+        pendingTasks: pendingCount,
         totalEmployees: employeesData?.length || 0,
         overdueItems: overdueData?.length || 0,
         totalInventoryItems: inventoryData?.length || 0,
@@ -199,6 +228,64 @@ export const OverviewSection = () => {
           </Card>
         ))}
       </div>
+
+      {/* Task Dashboard */}
+      <Card className="border-border shadow-sm">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            Thống kê công việc
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* In Progress Tasks */}
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Clock className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Công việc triển khai</p>
+                  <p className="text-2xl font-bold text-primary">{taskStats.inProgressTasks}</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Đang thực hiện</p>
+            </div>
+
+            {/* Pending Tasks */}
+            <div className="bg-accent/5 border border-accent/20 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <ListTodo className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Công việc tồn đọng</p>
+                  <p className="text-2xl font-bold text-accent">{taskStats.pendingTasks}</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Chờ xử lý</p>
+            </div>
+
+            {/* Completion Rate */}
+            <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Target className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Tỷ lệ hoàn thành</p>
+                  <p className="text-2xl font-bold text-green-600">{taskStats.completionRate}%</p>
+                </div>
+              </div>
+              <Progress value={taskStats.completionRate} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-2">
+                {taskStats.completedTasks}/{taskStats.totalTasks} công việc
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Projects Overview */}
       <Card className="border-border shadow-sm">

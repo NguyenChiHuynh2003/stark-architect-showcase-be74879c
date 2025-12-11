@@ -125,14 +125,14 @@ const ClosedProjects = () => {
       <div className="min-h-screen bg-background flex w-full">
         <Sidebar activeSection={activeSection} setActiveSection={handleSectionChange} />
         
-        <div className="flex-1 flex flex-col">
-          <DashboardHeader />
+        <div className="flex-1 flex flex-col min-w-0">
+          <DashboardHeader onNavigate={(section) => handleSectionChange(section)} />
           
-          <main className="flex-1 p-6 overflow-auto">
-            <div className="max-w-7xl mx-auto space-y-6">
+          <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-auto">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
               <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">Dự án đóng</h1>
-                <p className="text-muted-foreground">Quản lý các dự án đã hoàn thành và tạm dừng</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">Dự án đóng</h1>
+                <p className="text-muted-foreground text-sm sm:text-base">Quản lý các dự án đã hoàn thành và tạm dừng</p>
               </div>
 
               <div className="flex items-center gap-4">
@@ -148,23 +148,29 @@ const ClosedProjects = () => {
               </div>
 
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-                <TabsList>
-                  <TabsTrigger value="all">
-                    Tất cả ({projects?.length || 0})
+                <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
+                  <TabsTrigger value="all" className="text-xs sm:text-sm">
+                    <span className="hidden sm:inline">Tất cả</span>
+                    <span className="sm:hidden">Tất cả</span>
+                    <span className="ml-1">({projects?.length || 0})</span>
                   </TabsTrigger>
-                  <TabsTrigger value="completed">
-                    Hoàn thành ({completedCount})
+                  <TabsTrigger value="completed" className="text-xs sm:text-sm">
+                    <span className="hidden sm:inline">Hoàn thành</span>
+                    <span className="sm:hidden">HT</span>
+                    <span className="ml-1">({completedCount})</span>
                   </TabsTrigger>
-                  <TabsTrigger value="on_hold">
-                    Tạm dừng ({onHoldCount})
+                  <TabsTrigger value="on_hold" className="text-xs sm:text-sm">
+                    <span className="hidden sm:inline">Tạm dừng</span>
+                    <span className="sm:hidden">TD</span>
+                    <span className="ml-1">({onHoldCount})</span>
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value={activeTab} className="mt-6">
+                <TabsContent value={activeTab} className="mt-4 sm:mt-6">
                   {isLoading ? (
-                    <div className="text-center py-8">Đang tải...</div>
+                    <div className="text-center py-8 text-sm sm:text-base">Đang tải...</div>
                   ) : filteredProjects && filteredProjects.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {filteredProjects.map((project) => {
                         const { taskStats, members, progress } = getProjectStats(project.id);
                         return (
@@ -180,8 +186,8 @@ const ClosedProjects = () => {
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-12 bg-muted/50 rounded-lg">
-                      <p className="text-muted-foreground">Không có dự án nào</p>
+                    <div className="text-center py-8 sm:py-12 bg-muted/50 rounded-lg">
+                      <p className="text-muted-foreground text-sm sm:text-base">Không có dự án nào</p>
                     </div>
                   )}
                 </TabsContent>

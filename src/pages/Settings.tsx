@@ -162,35 +162,39 @@ export default function Settings() {
       <div className="flex min-h-screen bg-background">
         <Sidebar activeSection={activeSection} setActiveSection={handleSectionChange} />
         
-        <div className="flex-1 flex flex-col">
-          <DashboardHeader />
+        <div className="flex-1 flex flex-col min-w-0">
+          <DashboardHeader onNavigate={(section) => handleSectionChange(section)} />
           
-          <main className="flex-1 p-6 space-y-6">
+          <main className="flex-1 p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 overflow-auto">
             <div>
-              <h1 className="text-3xl font-bold">Cài đặt</h1>
-              <p className="text-muted-foreground mt-2">
+              <h1 className="text-2xl sm:text-3xl font-bold">Cài đặt</h1>
+              <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
                 Quản lý thông tin cá nhân và cài đặt hệ thống
               </p>
             </div>
 
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="profile">
-                  <User className="w-4 h-4 mr-2" />
-                  Hồ sơ
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+                <TabsTrigger value="profile" className="text-xs sm:text-sm py-2">
+                  <User className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden xs:inline">Hồ sơ</span>
+                  <span className="xs:hidden">Hồ sơ</span>
                 </TabsTrigger>
-                <TabsTrigger value="security">
-                  <Lock className="w-4 h-4 mr-2" />
-                  Bảo mật
+                <TabsTrigger value="security" className="text-xs sm:text-sm py-2">
+                  <Lock className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden xs:inline">Bảo mật</span>
+                  <span className="xs:hidden">Bảo mật</span>
                 </TabsTrigger>
-                <TabsTrigger value="notifications">
-                  <Bell className="w-4 h-4 mr-2" />
-                  Thông báo
+                <TabsTrigger value="notifications" className="text-xs sm:text-sm py-2">
+                  <Bell className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Thông báo</span>
+                  <span className="sm:hidden">TB</span>
                 </TabsTrigger>
                 {isAdmin && (
-                  <TabsTrigger value="company">
-                    <Building2 className="w-4 h-4 mr-2" />
-                    Công ty
+                  <TabsTrigger value="company" className="text-xs sm:text-sm py-2">
+                    <Building2 className="w-4 h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Công ty</span>
+                    <span className="sm:hidden">CT</span>
                   </TabsTrigger>
                 )}
               </TabsList>
@@ -198,13 +202,13 @@ export default function Settings() {
               {/* Profile Tab */}
               <TabsContent value="profile">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Thông tin cá nhân</CardTitle>
-                    <CardDescription>
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">Thông tin cá nhân</CardTitle>
+                    <CardDescription className="text-sm">
                       Cập nhật thông tin tài khoản của bạn
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="fullName">Họ và tên</Label>
                       <Input
@@ -227,7 +231,7 @@ export default function Settings() {
                         Email không thể thay đổi
                       </p>
                     </div>
-                    <Button onClick={handleUpdateProfile} disabled={loading}>
+                    <Button onClick={handleUpdateProfile} disabled={loading} className="w-full sm:w-auto">
                       {loading ? "Đang lưu..." : "Lưu thay đổi"}
                     </Button>
                   </CardContent>
@@ -237,13 +241,13 @@ export default function Settings() {
               {/* Security Tab */}
               <TabsContent value="security">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Đổi mật khẩu</CardTitle>
-                    <CardDescription>
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">Đổi mật khẩu</CardTitle>
+                    <CardDescription className="text-sm">
                       Cập nhật mật khẩu để bảo mật tài khoản
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="newPassword">Mật khẩu mới</Label>
                       <Input
@@ -264,7 +268,7 @@ export default function Settings() {
                         placeholder="Nhập lại mật khẩu mới"
                       />
                     </div>
-                    <Button onClick={handleChangePassword} disabled={loading}>
+                    <Button onClick={handleChangePassword} disabled={loading} className="w-full sm:w-auto">
                       {loading ? "Đang xử lý..." : "Đổi mật khẩu"}
                     </Button>
                   </CardContent>
@@ -274,17 +278,17 @@ export default function Settings() {
               {/* Notifications Tab */}
               <TabsContent value="notifications">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Cài đặt thông báo</CardTitle>
-                    <CardDescription>
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">Cài đặt thông báo</CardTitle>
+                    <CardDescription className="text-sm">
                       Quản lý các thông báo bạn muốn nhận
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Thông báo email</Label>
-                        <p className="text-sm text-muted-foreground">
+                  <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-4 sm:space-y-6">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="space-y-0.5 flex-1 min-w-0">
+                        <Label className="text-sm">Thông báo email</Label>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Nhận thông báo qua email
                         </p>
                       </div>
@@ -293,10 +297,10 @@ export default function Settings() {
                         onCheckedChange={setEmailNotifications}
                       />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Thông báo dự án</Label>
-                        <p className="text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="space-y-0.5 flex-1 min-w-0">
+                        <Label className="text-sm">Thông báo dự án</Label>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Nhận thông báo về cập nhật dự án
                         </p>
                       </div>
@@ -305,10 +309,10 @@ export default function Settings() {
                         onCheckedChange={setProjectNotifications}
                       />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Thông báo nhiệm vụ</Label>
-                        <p className="text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="space-y-0.5 flex-1 min-w-0">
+                        <Label className="text-sm">Thông báo nhiệm vụ</Label>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Nhận thông báo về nhiệm vụ được giao
                         </p>
                       </div>
@@ -317,7 +321,7 @@ export default function Settings() {
                         onCheckedChange={setTaskNotifications}
                       />
                     </div>
-                    <Button onClick={() => toast.success("Đã lưu cài đặt thông báo!")}>
+                    <Button onClick={() => toast.success("Đã lưu cài đặt thông báo!")} className="w-full sm:w-auto">
                       Lưu cài đặt
                     </Button>
                   </CardContent>
@@ -328,13 +332,13 @@ export default function Settings() {
               {isAdmin && (
                 <TabsContent value="company">
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Thông tin công ty</CardTitle>
-                      <CardDescription>
+                    <CardHeader className="p-4 sm:p-6">
+                      <CardTitle className="text-lg sm:text-xl">Thông tin công ty</CardTitle>
+                      <CardDescription className="text-sm">
                         Cập nhật thông tin công ty (Chỉ quản trị viên)
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="companyName">Tên công ty</Label>
                         <Input
@@ -353,26 +357,28 @@ export default function Settings() {
                           placeholder="Nhập địa chỉ công ty"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="companyPhone">Số điện thoại</Label>
-                        <Input
-                          id="companyPhone"
-                          value={companyPhone}
-                          onChange={(e) => setCompanyPhone(e.target.value)}
-                          placeholder="Nhập số điện thoại"
-                        />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="companyPhone">Số điện thoại</Label>
+                          <Input
+                            id="companyPhone"
+                            value={companyPhone}
+                            onChange={(e) => setCompanyPhone(e.target.value)}
+                            placeholder="Nhập số điện thoại"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="companyEmail">Email công ty</Label>
+                          <Input
+                            id="companyEmail"
+                            type="email"
+                            value={companyEmail}
+                            onChange={(e) => setCompanyEmail(e.target.value)}
+                            placeholder="Nhập email công ty"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="companyEmail">Email công ty</Label>
-                        <Input
-                          id="companyEmail"
-                          type="email"
-                          value={companyEmail}
-                          onChange={(e) => setCompanyEmail(e.target.value)}
-                          placeholder="Nhập email công ty"
-                        />
-                      </div>
-                      <Button onClick={handleUpdateCompanySettings} disabled={loading}>
+                      <Button onClick={handleUpdateCompanySettings} disabled={loading} className="w-full sm:w-auto">
                         {loading ? "Đang lưu..." : "Lưu thông tin công ty"}
                       </Button>
                     </CardContent>

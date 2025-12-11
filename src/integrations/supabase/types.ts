@@ -220,8 +220,6 @@ export type Database = {
           asset_id: string
           asset_name: string
           asset_type: Database["public"]["Enums"]["asset_type"]
-          brand: string | null
-          category: string | null
           cost_basis: number
           cost_center: string
           created_at: string
@@ -231,18 +229,10 @@ export type Database = {
             | Database["public"]["Enums"]["depreciation_method"]
             | null
           id: string
-          installation_scope: string | null
           inventory_item_id: string | null
           nbv: number | null
-          notes: string | null
-          project_location: string | null
-          project_name: string | null
-          quantity_per_contract: number | null
-          quantity_requested: number | null
-          quantity_supplied_previous: number | null
           sku: string
           total_maintenance_cost: number | null
-          unit: string | null
           updated_at: string
           useful_life_months: number | null
         }
@@ -253,8 +243,6 @@ export type Database = {
           asset_id: string
           asset_name: string
           asset_type: Database["public"]["Enums"]["asset_type"]
-          brand?: string | null
-          category?: string | null
           cost_basis?: number
           cost_center: string
           created_at?: string
@@ -264,18 +252,10 @@ export type Database = {
             | Database["public"]["Enums"]["depreciation_method"]
             | null
           id?: string
-          installation_scope?: string | null
           inventory_item_id?: string | null
           nbv?: number | null
-          notes?: string | null
-          project_location?: string | null
-          project_name?: string | null
-          quantity_per_contract?: number | null
-          quantity_requested?: number | null
-          quantity_supplied_previous?: number | null
           sku: string
           total_maintenance_cost?: number | null
-          unit?: string | null
           updated_at?: string
           useful_life_months?: number | null
         }
@@ -286,8 +266,6 @@ export type Database = {
           asset_id?: string
           asset_name?: string
           asset_type?: Database["public"]["Enums"]["asset_type"]
-          brand?: string | null
-          category?: string | null
           cost_basis?: number
           cost_center?: string
           created_at?: string
@@ -297,18 +275,10 @@ export type Database = {
             | Database["public"]["Enums"]["depreciation_method"]
             | null
           id?: string
-          installation_scope?: string | null
           inventory_item_id?: string | null
           nbv?: number | null
-          notes?: string | null
-          project_location?: string | null
-          project_name?: string | null
-          quantity_per_contract?: number | null
-          quantity_requested?: number | null
-          quantity_supplied_previous?: number | null
           sku?: string
           total_maintenance_cost?: number | null
-          unit?: string | null
           updated_at?: string
           useful_life_months?: number | null
         }
@@ -993,127 +963,6 @@ export type Database = {
         }
         Relationships: []
       }
-      project_items: {
-        Row: {
-          assigned_to: string | null
-          completion_percentage: number | null
-          created_at: string
-          created_by: string
-          description: string | null
-          end_date: string | null
-          id: string
-          item_name: string
-          project_id: string
-          quantity: number | null
-          start_date: string | null
-          status: string | null
-          total_price: number | null
-          unit: string | null
-          unit_price: number | null
-          updated_at: string
-        }
-        Insert: {
-          assigned_to?: string | null
-          completion_percentage?: number | null
-          created_at?: string
-          created_by: string
-          description?: string | null
-          end_date?: string | null
-          id?: string
-          item_name: string
-          project_id: string
-          quantity?: number | null
-          start_date?: string | null
-          status?: string | null
-          total_price?: number | null
-          unit?: string | null
-          unit_price?: number | null
-          updated_at?: string
-        }
-        Update: {
-          assigned_to?: string | null
-          completion_percentage?: number | null
-          created_at?: string
-          created_by?: string
-          description?: string | null
-          end_date?: string | null
-          id?: string
-          item_name?: string
-          project_id?: string
-          quantity?: number | null
-          start_date?: string | null
-          status?: string | null
-          total_price?: number | null
-          unit?: string | null
-          unit_price?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_items_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_kpis: {
-        Row: {
-          created_at: string
-          created_by: string
-          current_value: number | null
-          description: string | null
-          due_date: string | null
-          id: string
-          kpi_name: string
-          project_id: string
-          status: string | null
-          target_value: number | null
-          unit: string | null
-          updated_at: string
-          weight: number | null
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          current_value?: number | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          kpi_name: string
-          project_id: string
-          status?: string | null
-          target_value?: number | null
-          unit?: string | null
-          updated_at?: string
-          weight?: number | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          current_value?: number | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          kpi_name?: string
-          project_id?: string
-          status?: string | null
-          target_value?: number | null
-          unit?: string | null
-          updated_at?: string
-          weight?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_kpis_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       projects: {
         Row: {
           budget: number | null
@@ -1241,30 +1090,6 @@ export type Database = {
           },
         ]
       }
-      user_permissions: {
-        Row: {
-          allowed_modules: string[] | null
-          created_at: string
-          id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          allowed_modules?: string[] | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          allowed_modules?: string[] | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -1291,23 +1116,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_module_access: {
-        Args: { _module: string; _user_id: string }
-        Returns: boolean
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
-        Returns: boolean
-      }
-      is_project_owner: {
-        Args: { _project_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_team_member: {
-        Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
     }

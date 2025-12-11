@@ -4,14 +4,21 @@ import { useAuth } from "./useAuth";
 
 export type AppRole = "admin" | "user" | "accountant" | "hr_admin" | "project_manager";
 
-// Define which sections each role can access
-const rolePermissions: Record<AppRole, string[]> = {
-  admin: ["overview", "projects", "closed-projects", "tasks", "hr", "accounting", "inventory", "reports", "settings", "admin-users"],
-  accountant: ["overview", "accounting", "inventory", "projects", "closed-projects"],
-  hr_admin: ["overview", "tasks", "hr"],
-  project_manager: ["overview", "projects", "closed-projects", "tasks", "inventory"],
-  user: ["overview"], // Basic user has limited access
-};
+// Available modules in the system
+export const availableModules = [
+  { id: "overview", label: "Tổng quan" },
+  { id: "projects", label: "Dự án" },
+  { id: "closed-projects", label: "Dự án đã đóng" },
+  { id: "tasks", label: "Nhiệm vụ" },
+  { id: "hr", label: "Nhân sự" },
+  { id: "accounting", label: "Kế toán" },
+  { id: "inventory", label: "Quản lí kho" },
+  { id: "reports", label: "Báo cáo" },
+  { id: "settings", label: "Cài đặt" },
+  { id: "admin-users", label: "Quản lý người dùng" },
+] as const;
+
+export type ModuleId = typeof availableModules[number]["id"];
 
 export const roleLabels: Record<AppRole, string> = {
   admin: "Quản trị viên",
@@ -24,44 +31,65 @@ export const roleLabels: Record<AppRole, string> = {
 export const useUserRole = () => {
   const { user } = useAuth();
   const [role, setRole] = useState<AppRole>("user");
+  const [allowedModules, setAllowedModules] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRole = async () => {
+    const fetchRoleAndPermissions = async () => {
       if (!user) {
         setLoading(false);
         return;
       }
 
       try {
-        const { data } = await supabase
+        // Fetch role
+        const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (data?.role) {
-          setRole(data.role as AppRole);
+        if (roleData?.role) {
+          setRole(roleData.role as AppRole);
+        }
+
+        // If admin, grant all modules
+        if (roleData?.role === "admin") {
+          setAllowedModules(availableModules.map(m => m.id));
+        } else {
+          // Fetch module permissions
+          const { data: permData } = await supabase
+            .from("user_permissions")
+            .select("allowed_modules")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          setAllowedModules(permData?.allowed_modules || ["overview"]);
         }
       } catch (error) {
-        console.error("Error fetching role:", error);
+        console.error("Error fetching role/permissions:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRole();
+    fetchRoleAndPermissions();
   }, [user]);
 
   const hasAccess = (section: string): boolean => {
-    return rolePermissions[role]?.includes(section) || false;
+    // Admin always has access
+    if (role === "admin") return true;
+    return allowedModules.includes(section);
   };
 
   const getAllowedSections = (): string[] => {
-    return rolePermissions[role] || [];
+    if (role === "admin") {
+      return availableModules.map(m => m.id);
+    }
+    return allowedModules;
   };
 
   const isAdmin = role === "admin";
 
-  return { role, loading, hasAccess, getAllowedSections, isAdmin };
+  return { role, loading, hasAccess, getAllowedSections, isAdmin, allowedModules };
 };

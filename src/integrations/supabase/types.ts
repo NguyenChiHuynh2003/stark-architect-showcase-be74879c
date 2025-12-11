@@ -220,6 +220,7 @@ export type Database = {
           asset_id: string
           asset_name: string
           asset_type: Database["public"]["Enums"]["asset_type"]
+          brand: string | null
           cost_basis: number
           cost_center: string
           created_at: string
@@ -229,10 +230,16 @@ export type Database = {
             | Database["public"]["Enums"]["depreciation_method"]
             | null
           id: string
+          installation_scope: string | null
           inventory_item_id: string | null
           nbv: number | null
+          notes: string | null
+          quantity_per_contract: number | null
+          quantity_requested: number | null
+          quantity_supplied_previous: number | null
           sku: string
           total_maintenance_cost: number | null
+          unit: string | null
           updated_at: string
           useful_life_months: number | null
         }
@@ -243,6 +250,7 @@ export type Database = {
           asset_id: string
           asset_name: string
           asset_type: Database["public"]["Enums"]["asset_type"]
+          brand?: string | null
           cost_basis?: number
           cost_center: string
           created_at?: string
@@ -252,10 +260,16 @@ export type Database = {
             | Database["public"]["Enums"]["depreciation_method"]
             | null
           id?: string
+          installation_scope?: string | null
           inventory_item_id?: string | null
           nbv?: number | null
+          notes?: string | null
+          quantity_per_contract?: number | null
+          quantity_requested?: number | null
+          quantity_supplied_previous?: number | null
           sku: string
           total_maintenance_cost?: number | null
+          unit?: string | null
           updated_at?: string
           useful_life_months?: number | null
         }
@@ -266,6 +280,7 @@ export type Database = {
           asset_id?: string
           asset_name?: string
           asset_type?: Database["public"]["Enums"]["asset_type"]
+          brand?: string | null
           cost_basis?: number
           cost_center?: string
           created_at?: string
@@ -275,10 +290,16 @@ export type Database = {
             | Database["public"]["Enums"]["depreciation_method"]
             | null
           id?: string
+          installation_scope?: string | null
           inventory_item_id?: string | null
           nbv?: number | null
+          notes?: string | null
+          quantity_per_contract?: number | null
+          quantity_requested?: number | null
+          quantity_supplied_previous?: number | null
           sku?: string
           total_maintenance_cost?: number | null
+          unit?: string | null
           updated_at?: string
           useful_life_months?: number | null
         }
@@ -962,6 +983,124 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      project_items: {
+        Row: {
+          completion_percentage: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          item_name: string
+          project_id: string
+          quantity: number
+          start_date: string | null
+          status: string
+          total_price: number
+          unit: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          completion_percentage?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          item_name: string
+          project_id: string
+          quantity?: number
+          start_date?: string | null
+          status?: string
+          total_price?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          completion_percentage?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          item_name?: string
+          project_id?: string
+          quantity?: number
+          start_date?: string | null
+          status?: string
+          total_price?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_kpis: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          current_value: number
+          description: string | null
+          due_date: string | null
+          id: string
+          kpi_name: string
+          project_id: string
+          status: string
+          target_value: number
+          unit: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          current_value?: number
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          kpi_name: string
+          project_id: string
+          status?: string
+          target_value?: number
+          unit?: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          current_value?: number
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          kpi_name?: string
+          project_id?: string
+          status?: string
+          target_value?: number
+          unit?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_kpis_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {

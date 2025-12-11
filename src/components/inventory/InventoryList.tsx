@@ -98,7 +98,7 @@ export const InventoryList = () => {
           <Input
             placeholder="Tìm kiếm hàng hóa"
             value={searchQuery}
-            onChange={✉️ => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -152,7 +152,7 @@ export const InventoryList = () => {
                   <TableCell className="text-right">{item.retail_price?.toLocaleString() || 0}</TableCell>
                   <TableCell className="text-right font-semibold">{item.stock_quantity || 0}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={✉️ => {
+                    <Button variant="outline" size="sm" onClick={(e) => {
                       e.stopPropagation();
                       handleEdit(item);
                     }}>

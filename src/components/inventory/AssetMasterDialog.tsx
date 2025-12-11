@@ -13,13 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface AssetMasterDialogProps {
   open: boolean;
@@ -34,32 +27,27 @@ export function AssetMasterDialog({
 }: AssetMasterDialogProps) {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    asset_id: "",
-    sku: "",
     asset_name: "",
-    asset_type: "equipment",
-    cost_center: "",
-    cost_basis: "",
-    activation_date: "",
-    useful_life_months: "",
-    amortization_period_months: "",
-    depreciation_method: "straight_line",
+    brand: "",
+    unit: "",
+    quantity_supplied_previous: "",
+    quantity_requested: "",
+    quantity_per_contract: "",
+    installation_scope: "",
+    notes: "",
   });
 
   useEffect(() => {
     if (editingAsset) {
       setFormData({
-        asset_id: editingAsset.asset_id || "",
-        sku: editingAsset.sku || "",
         asset_name: editingAsset.asset_name || "",
-        asset_type: editingAsset.asset_type || "equipment",
-        cost_center: editingAsset.cost_center || "",
-        cost_basis: editingAsset.cost_basis?.toString() || "",
-        activation_date: editingAsset.activation_date || "",
-        useful_life_months: editingAsset.useful_life_months?.toString() || "",
-        amortization_period_months:
-          editingAsset.amortization_period_months?.toString() || "",
-        depreciation_method: editingAsset.depreciation_method || "straight_line",
+        brand: editingAsset.brand || "",
+        unit: editingAsset.unit || "",
+        quantity_supplied_previous: editingAsset.quantity_supplied_previous?.toString() || "",
+        quantity_requested: editingAsset.quantity_requested?.toString() || "",
+        quantity_per_contract: editingAsset.quantity_per_contract?.toString() || "",
+        installation_scope: editingAsset.installation_scope || "",
+        notes: editingAsset.notes || "",
       });
     } else {
       resetForm();
@@ -68,46 +56,49 @@ export function AssetMasterDialog({
 
   const resetForm = () => {
     setFormData({
-      asset_id: "",
-      sku: "",
       asset_name: "",
-      asset_type: "equipment",
-      cost_center: "",
-      cost_basis: "",
-      activation_date: "",
-      useful_life_months: "",
-      amortization_period_months: "",
-      depreciation_method: "straight_line",
+      brand: "",
+      unit: "",
+      quantity_supplied_previous: "",
+      quantity_requested: "",
+      quantity_per_contract: "",
+      installation_scope: "",
+      notes: "",
     });
   };
+
+  // Calculate derived values
+  const quantitySuppliedPrev = parseFloat(formData.quantity_supplied_previous) || 0;
+  const quantityRequested = parseFloat(formData.quantity_requested) || 0;
+  const quantityPerContract = parseFloat(formData.quantity_per_contract) || 0;
+  const cumulativeQuantity = quantitySuppliedPrev + quantityRequested;
+  const remainingQuantity = quantityPerContract - cumulativeQuantity;
+  const percentageRequested = quantityPerContract > 0 
+    ? ((cumulativeQuantity / quantityPerContract) * 100).toFixed(1) 
+    : "0";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.asset_id || !formData.sku || !formData.asset_name) {
-      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
+    if (!formData.asset_name) {
+      toast.error("Vui lòng nhập tên vật tư");
       return;
     }
 
     try {
       const dataToSave = {
-        asset_id: formData.asset_id,
-        sku: formData.sku,
+        asset_id: editingAsset?.asset_id || `VT-${Date.now()}`,
+        sku: editingAsset?.sku || `SKU-${Date.now()}`,
         asset_name: formData.asset_name,
-        asset_type: formData.asset_type as "equipment" | "tools" | "materials",
-        cost_center: formData.cost_center,
-        cost_basis: parseFloat(formData.cost_basis) || 0,
-        activation_date: formData.activation_date || null,
-        useful_life_months: formData.useful_life_months
-          ? parseInt(formData.useful_life_months)
-          : null,
-        amortization_period_months: formData.amortization_period_months
-          ? parseInt(formData.amortization_period_months)
-          : null,
-        depreciation_method: formData.depreciation_method as
-          | "straight_line"
-          | "declining_balance"
-          | "units_of_production",
+        brand: formData.brand || null,
+        unit: formData.unit || null,
+        quantity_supplied_previous: parseFloat(formData.quantity_supplied_previous) || 0,
+        quantity_requested: parseFloat(formData.quantity_requested) || 0,
+        quantity_per_contract: parseFloat(formData.quantity_per_contract) || 0,
+        installation_scope: formData.installation_scope || null,
+        notes: formData.notes || null,
+        asset_type: "materials" as const,
+        cost_center: "default",
         created_by: user?.id,
       };
 
@@ -128,7 +119,7 @@ export function AssetMasterDialog({
       if (error) throw error;
 
       toast.success(
-        editingAsset ? "Cập nhật tài sản thành công" : "Thêm tài sản thành công"
+        editingAsset ? "Cập nhật vật tư thành công" : "Thêm vật tư thành công"
       );
       onClose();
     } catch (error: any) {
@@ -141,45 +132,16 @@ export function AssetMasterDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {editingAsset ? "Chỉnh sửa Tài sản" : "Thêm Tài sản mới"}
+            {editingAsset ? "Chỉnh sửa Vật tư" : "Thêm Vật tư mới"}
           </DialogTitle>
           <DialogDescription>
-            Nhập thông tin Master Data của tài sản
+            Nhập thông tin vật tư theo mẫu yêu cầu
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="asset_id">
-                Mã Tài sản <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="asset_id"
-                value={formData.asset_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, asset_id: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sku">
-                SKU <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="sku"
-                value={formData.sku}
-                onChange={(e) =>
-                  setFormData({ ...formData, sku: e.target.value })
-                }
-                required
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="asset_name">
-              Tên Tài sản <span className="text-red-500">*</span>
+              Tên Vật tư, Quy cách <span className="text-red-500">*</span>
             </Label>
             <Input
               id="asset_name"
@@ -187,118 +149,118 @@ export function AssetMasterDialog({
               onChange={(e) =>
                 setFormData({ ...formData, asset_name: e.target.value })
               }
+              placeholder="VD: Nón bảo hộ công nhân-4 điểm neo (Vàng)"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="asset_type">Loại Tài sản</Label>
-              <Select
-                value={formData.asset_type}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, asset_type: value })
+              <Label htmlFor="brand">Nhãn hiệu yêu cầu</Label>
+              <Input
+                id="brand"
+                value={formData.brand}
+                onChange={(e) =>
+                  setFormData({ ...formData, brand: e.target.value })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="equipment">Thiết bị</SelectItem>
-                  <SelectItem value="tools">Công cụ dụng cụ (C&C)</SelectItem>
-                  <SelectItem value="materials">Vật tư</SelectItem>
-                </SelectContent>
-              </Select>
+                placeholder="VD: 3M, Honeywell..."
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cost_center">Trung tâm Chi phí</Label>
+              <Label htmlFor="unit">ĐVT (Đơn vị tính)</Label>
               <Input
-                id="cost_center"
-                value={formData.cost_center}
+                id="unit"
+                value={formData.unit}
                 onChange={(e) =>
-                  setFormData({ ...formData, cost_center: e.target.value })
+                  setFormData({ ...formData, unit: e.target.value })
                 }
+                placeholder="VD: Cái, Bộ, M..."
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="cost_basis">Giá trị Gốc (₫)</Label>
+              <Label htmlFor="quantity_supplied_previous">KL đã cấp đến kỳ trước</Label>
               <Input
-                id="cost_basis"
+                id="quantity_supplied_previous"
                 type="number"
-                value={formData.cost_basis}
+                step="0.01"
+                value={formData.quantity_supplied_previous}
                 onChange={(e) =>
-                  setFormData({ ...formData, cost_basis: e.target.value })
+                  setFormData({ ...formData, quantity_supplied_previous: e.target.value })
                 }
+                placeholder="0"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="activation_date">Ngày Kích hoạt</Label>
+              <Label htmlFor="quantity_requested">KL yêu cầu kỳ này</Label>
               <Input
-                id="activation_date"
-                type="date"
-                value={formData.activation_date}
-                onChange={(e) =>
-                  setFormData({ ...formData, activation_date: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="useful_life_months">Thời gian hữu dụng (tháng)</Label>
-              <Input
-                id="useful_life_months"
+                id="quantity_requested"
                 type="number"
-                value={formData.useful_life_months}
+                step="0.01"
+                value={formData.quantity_requested}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    useful_life_months: e.target.value,
-                  })
+                  setFormData({ ...formData, quantity_requested: e.target.value })
                 }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amortization_period_months">
-                Kỳ Phân bổ (tháng)
-              </Label>
-              <Input
-                id="amortization_period_months"
-                type="number"
-                value={formData.amortization_period_months}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    amortization_period_months: e.target.value,
-                  })
-                }
+                placeholder="0"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="depreciation_method">Phương pháp Khấu hao</Label>
-            <Select
-              value={formData.depreciation_method}
-              onValueChange={(value) =>
-                setFormData({ ...formData, depreciation_method: value })
+            <Label htmlFor="quantity_per_contract">KL theo HĐ/PL/PS (Khối lượng theo hợp đồng)</Label>
+            <Input
+              id="quantity_per_contract"
+              type="number"
+              step="0.01"
+              value={formData.quantity_per_contract}
+              onChange={(e) =>
+                setFormData({ ...formData, quantity_per_contract: e.target.value })
               }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="straight_line">Đường thẳng</SelectItem>
-                <SelectItem value="declining_balance">Số dư giảm dần</SelectItem>
-                <SelectItem value="units_of_production">
-                  Theo đơn vị sản xuất
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              placeholder="0"
+            />
+          </div>
+
+          {/* Calculated fields - read only */}
+          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+            <div className="space-y-1">
+              <Label className="text-sm text-muted-foreground">KL cộng dồn các kỳ</Label>
+              <div className="font-medium">{cumulativeQuantity}</div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-sm text-muted-foreground">Khối lượng còn lại</Label>
+              <div className="font-medium">{remainingQuantity}</div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-sm text-muted-foreground">% khối lượng yêu cầu</Label>
+              <div className="font-medium">{percentageRequested}%</div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="installation_scope">Phạm vi lắp đặt</Label>
+            <Input
+              id="installation_scope"
+              value={formData.installation_scope}
+              onChange={(e) =>
+                setFormData({ ...formData, installation_scope: e.target.value })
+              }
+              placeholder="VD: Tầng 1, Khu A..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Ghi chú</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
+              placeholder="VD: IPC cấp áo lưới..."
+              rows={3}
+            />
           </div>
 
           <div className="flex justify-end gap-2">

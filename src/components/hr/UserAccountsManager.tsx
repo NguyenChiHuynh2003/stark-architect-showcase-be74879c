@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Key, Trash2, Loader2 } from "lucide-react";
+import { Key, Trash2, Loader2, RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { AppRole, roleLabels } from "@/hooks/useUserRole";
 
 interface UserProfile {
   id: string;
@@ -15,6 +17,14 @@ interface UserProfile {
   email: string;
   role: string;
 }
+
+const roleBadgeColors: Record<string, string> = {
+  admin: "bg-red-100 text-red-800 border-red-200",
+  accountant: "bg-blue-100 text-blue-800 border-blue-200",
+  hr_admin: "bg-green-100 text-green-800 border-green-200",
+  project_manager: "bg-purple-100 text-purple-800 border-purple-200",
+  user: "bg-gray-100 text-gray-800 border-gray-200",
+};
 
 export const UserAccountsManager = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -26,35 +36,29 @@ export const UserAccountsManager = () => {
   const { toast } = useToast();
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Không có quyền truy cập");
 
-      if (profilesError) throw profilesError;
-
-      const userProfiles: UserProfile[] = [];
-
-      for (const profile of profilesData || []) {
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", profile.id)
-          .single();
-
-        const { data: authData } = await supabase.auth.admin.getUserById(profile.id);
-
-        if (authData.user) {
-          userProfiles.push({
-            id: profile.id,
-            full_name: profile.full_name,
-            email: authData.user.email || "",
-            role: roleData?.role || "user",
-          });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-get-users`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
         }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Không thể lấy danh sách người dùng");
       }
 
-      setUsers(userProfiles);
+      const { users: usersData } = await response.json();
+      setUsers(usersData || []);
     } catch (error: any) {
       toast({
         title: "Lỗi",
@@ -141,7 +145,13 @@ export const UserAccountsManager = () => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Quản lý tài khoản người dùng ({users.length})</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Quản lý tài khoản người dùng ({users.length})</CardTitle>
+            <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Làm mới
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -158,7 +168,10 @@ export const UserAccountsManager = () => {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      Đang tải...
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Đang tải...
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
@@ -173,7 +186,12 @@ export const UserAccountsManager = () => {
                       <TableCell className="font-medium">{user.full_name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        <span className="capitalize">{user.role}</span>
+                        <Badge 
+                          variant="outline" 
+                          className={roleBadgeColors[user.role] || roleBadgeColors.user}
+                        >
+                          {roleLabels[user.role as AppRole] || user.role}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">

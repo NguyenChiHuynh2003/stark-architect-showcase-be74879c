@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { EmployeeDialog } from "./EmployeeDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ExportButtons } from "@/components/ExportButtons";
+import { exportToExcel, exportToPDF, employeeExportConfig } from "@/lib/exportUtils";
 
 interface Employee {
   id: string;
@@ -85,16 +87,36 @@ export const EmployeeList = () => {
     emp.full_name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleExportEmployees = (format: "excel" | "pdf") => {
+    const options = {
+      title: "Báo cáo Nhân sự",
+      filename: "bao_cao_nhan_su",
+      ...employeeExportConfig,
+      data: filteredEmployees,
+      summary: [
+        { label: "Tổng số nhân viên", value: filteredEmployees.length.toString() },
+      ],
+    };
+    format === "excel" ? exportToExcel(options) : exportToPDF(options);
+  };
+
   return (
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle>Danh sách nhân viên ({filteredEmployees.length})</CardTitle>
-            <Button onClick={() => { setSelectedEmployee(null); setDialogOpen(true); }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Thêm nhân viên
-            </Button>
+            <div className="flex gap-2">
+              <ExportButtons
+                onExportExcel={() => handleExportEmployees("excel")}
+                onExportPDF={() => handleExportEmployees("pdf")}
+                disabled={loading || filteredEmployees.length === 0}
+              />
+              <Button onClick={() => { setSelectedEmployee(null); setDialogOpen(true); }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Thêm nhân viên
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

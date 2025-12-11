@@ -20,7 +20,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Upload, FileSpreadsheet, Check, AlertCircle } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Upload, FileSpreadsheet, Check, AlertCircle, Eye } from "lucide-react";
 import * as XLSX from "xlsx";
 
 interface AssetImportDialogProps {
@@ -328,11 +333,35 @@ export function AssetImportDialog({ open, onClose }: AssetImportDialogProps) {
                         <TableCell>{asset.brand || "-"}</TableCell>
                         <TableCell>{asset.unit}</TableCell>
                         <TableCell className="text-right">{asset.quantity_requested}</TableCell>
-                        <TableCell className="max-w-[120px]" title={asset.installation_scope || ""}>
-                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap">{asset.installation_scope || "-"}</span>
+                        <TableCell className="max-w-[120px]">
+                          {asset.installation_scope ? (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="flex items-center gap-1 text-left hover:text-primary transition-colors">
+                                  <span className="block max-w-[90px] overflow-hidden text-ellipsis whitespace-nowrap">{asset.installation_scope}</span>
+                                  <Eye className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80 max-h-48 overflow-auto">
+                                <p className="text-sm whitespace-pre-wrap">{asset.installation_scope}</p>
+                              </PopoverContent>
+                            </Popover>
+                          ) : "-"}
                         </TableCell>
-                        <TableCell className="max-w-[120px]" title={asset.notes || ""}>
-                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap">{asset.notes || "-"}</span>
+                        <TableCell className="max-w-[120px]">
+                          {asset.notes ? (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="flex items-center gap-1 text-left hover:text-primary transition-colors">
+                                  <span className="block max-w-[90px] overflow-hidden text-ellipsis whitespace-nowrap">{asset.notes}</span>
+                                  <Eye className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80 max-h-48 overflow-auto">
+                                <p className="text-sm whitespace-pre-wrap">{asset.notes}</p>
+                              </PopoverContent>
+                            </Popover>
+                          ) : "-"}
                         </TableCell>
                         <TableCell>
                           {asset.isValid ? (

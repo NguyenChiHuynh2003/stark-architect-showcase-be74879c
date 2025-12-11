@@ -131,20 +131,25 @@ export const OverviewSection = () => {
         .limit(5);
       if (projectsItemsError) throw projectsItemsError;
 
-      // Fetch team member counts for each project
+      // Fetch assignee counts for each project (from tasks)
       const projectsData: ProjectWithItems[] = [];
       for (const project of projectsWithItems || []) {
-        const { data: teamData } = await supabase
-          .from("team_members")
-          .select("id")
-          .eq("project_id", project.id);
+        // Count unique assignees from tasks
+        const { data: taskAssignees } = await supabase
+          .from("tasks")
+          .select("assigned_to")
+          .eq("project_id", project.id)
+          .not("assigned_to", "is", null);
+
+        // Get unique assignees count
+        const uniqueAssignees = new Set(taskAssignees?.map(t => t.assigned_to) || []);
 
         projectsData.push({
           id: project.id,
           name: project.name,
           status: project.status,
           items: project.project_items || [],
-          teamCount: teamData?.length || 0,
+          teamCount: uniqueAssignees.size,
         });
       }
 

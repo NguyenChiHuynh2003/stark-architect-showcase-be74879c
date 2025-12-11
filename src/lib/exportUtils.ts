@@ -231,3 +231,15 @@ export const assetExportConfig = {
     { header: "Trung tâm CP", key: "cost_center", width: 15 },
   ],
 };
+
+export const taskExportConfig = {
+  columns: [
+    { header: "Tiêu đề", key: "title", width: 30 },
+    { header: "Dự án", key: "project_name", width: 25 },
+    { header: "Người thực hiện", key: "assignee_name", width: 20 },
+    { header: "Trạng thái", key: "status", width: 15 },
+    { header: "Ưu tiên", key: "priority", width: 12 },
+    { header: "Ngày đến hạn", key: "due_date", width: 15 },
+    { header: "Mô tả", key: "description", width: 35 },
+  ],
+};

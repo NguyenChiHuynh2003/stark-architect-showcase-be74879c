@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { TransactionDialog } from "@/components/accounting/TransactionDialog";
 import { TransactionList } from "@/components/accounting/TransactionList";
 import { ContractsSection } from "@/components/accounting/ContractsSection";
+import { ExportButtons } from "@/components/ExportButtons";
+import { exportToExcel, exportToPDF, transactionExportConfig } from "@/lib/exportUtils";
 
 interface Transaction {
   id: string;
@@ -116,6 +118,21 @@ export const AccountingSection = () => {
     return new Intl.NumberFormat("vi-VN").format(amount) + " đ";
   };
 
+  const handleExportTransactions = (format: "excel" | "pdf") => {
+    const options = {
+      title: "Báo cáo Giao dịch Kế toán",
+      filename: "bao_cao_giao_dich",
+      ...transactionExportConfig,
+      data: filteredTransactions,
+      summary: [
+        { label: "Tổng thu", value: formatCurrency(stats.totalIncome) },
+        { label: "Tổng chi", value: formatCurrency(stats.totalExpense) },
+        { label: "Lợi nhuận", value: formatCurrency(stats.profit) },
+      ],
+    };
+    format === "excel" ? exportToExcel(options) : exportToPDF(options);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -141,15 +158,22 @@ export const AccountingSection = () => {
         <TabsContent value="transactions" className="mt-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <CardTitle>Giao dịch thu chi</CardTitle>
                   <CardDescription>Theo dõi các giao dịch tài chính</CardDescription>
                 </div>
-                <Button onClick={handleAddNew}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Thêm giao dịch
-                </Button>
+                <div className="flex gap-2">
+                  <ExportButtons
+                    onExportExcel={() => handleExportTransactions("excel")}
+                    onExportPDF={() => handleExportTransactions("pdf")}
+                    disabled={loading || filteredTransactions.length === 0}
+                  />
+                  <Button onClick={handleAddNew}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Thêm giao dịch
+                  </Button>
+                </div>
               </div>
             </CardHeader>
         <CardContent>

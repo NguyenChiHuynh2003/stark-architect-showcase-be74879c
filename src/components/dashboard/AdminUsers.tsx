@@ -6,18 +6,19 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Trash2, Key, Shield } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { AppRole, roleLabels } from "@/hooks/useUserRole";
+import { AppRole, roleLabels, availableModules, ModuleId } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface UserProfile {
   id: string;
   full_name: string;
   email?: string;
   role?: string;
+  allowed_modules?: string[];
 }
 
 const roleBadgeColors: Record<string, string> = {
@@ -34,9 +35,11 @@ export const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [selectedModules, setSelectedModules] = useState<string[]>([]);
+  const [savingPermissions, setSavingPermissions] = useState(false);
   
   const [newUserData, setNewUserData] = useState({
     email: "",
@@ -46,7 +49,6 @@ export const AdminUsers = () => {
   });
 
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<AppRole>("user");
 
   useEffect(() => {
     fetchUsers();
@@ -63,23 +65,30 @@ export const AdminUsers = () => {
 
       const userIds = (profiles || []).map(p => p.id);
       let rolesMap: Record<string, string> = {};
+      let permissionsMap: Record<string, string[]> = {};
       
       if (userIds.length > 0) {
-        const { data: rolesData } = await supabase
-          .from("user_roles")
-          .select("user_id, role")
-          .in("user_id", userIds);
+        const [rolesRes, permsRes] = await Promise.all([
+          supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
+          supabase.from("user_permissions").select("user_id, allowed_modules").in("user_id", userIds),
+        ]);
         
-        rolesMap = (rolesData || []).reduce((acc, r) => {
+        rolesMap = (rolesRes.data || []).reduce((acc, r) => {
           acc[r.user_id] = r.role;
           return acc;
         }, {} as Record<string, string>);
+
+        permissionsMap = (permsRes.data || []).reduce((acc, p) => {
+          acc[p.user_id] = p.allowed_modules || [];
+          return acc;
+        }, {} as Record<string, string[]>);
       }
 
       const usersWithRoles = (profiles || []).map(profile => ({
         id: profile.id,
         full_name: profile.full_name,
         role: rolesMap[profile.id] || "user",
+        allowed_modules: permissionsMap[profile.id] || ["overview"],
       }));
 
       setUsers(usersWithRoles);
@@ -125,9 +134,16 @@ export const AdminUsers = () => {
       setNewUserData({ email: "", password: "", fullName: "", role: "user" });
       fetchUsers();
     } catch (error: any) {
+      let errorMessage = error.message || "Không thể tạo tài khoản";
+      
+      if (error.message?.includes("email address has already been registered") || 
+          error.message?.includes("email_exists")) {
+        errorMessage = "Email này đã được đăng ký. Vui lòng sử dụng email khác.";
+      }
+      
       toast({
-        title: "Lỗi",
-        description: error.message,
+        title: "Lỗi tạo tài khoản",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -177,24 +193,30 @@ export const AdminUsers = () => {
     }
   };
 
-  const handleUpdateRole = async () => {
+  const handleSavePermissions = async () => {
     if (!selectedUser) return;
 
+    setSavingPermissions(true);
     try {
+      // Upsert permissions
       const { error } = await supabase
-        .from("user_roles")
-        .update({ role: newRole })
-        .eq("user_id", selectedUser.id);
+        .from("user_permissions")
+        .upsert({
+          user_id: selectedUser.id,
+          allowed_modules: selectedModules,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
 
       if (error) throw error;
 
       toast({
         title: "Thành công",
-        description: "Cập nhật vai trò thành công",
+        description: "Cập nhật quyền truy cập thành công",
       });
 
-      setRoleDialogOpen(false);
+      setPermissionDialogOpen(false);
       setSelectedUser(null);
+      setSelectedModules([]);
       fetchUsers();
     } catch (error: any) {
       toast({
@@ -202,6 +224,8 @@ export const AdminUsers = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setSavingPermissions(false);
     }
   };
 
@@ -245,13 +269,40 @@ export const AdminUsers = () => {
     }
   };
 
+  const toggleModule = (moduleId: string) => {
+    setSelectedModules(prev => 
+      prev.includes(moduleId) 
+        ? prev.filter(m => m !== moduleId)
+        : [...prev, moduleId]
+    );
+  };
+
+  const selectAllModules = () => {
+    setSelectedModules(availableModules.map(m => m.id));
+  };
+
+  const deselectAllModules = () => {
+    setSelectedModules([]);
+  };
+
+  const openPermissionDialog = (user: UserProfile) => {
+    setSelectedUser(user);
+    setSelectedModules(user.allowed_modules || ["overview"]);
+    setPermissionDialogOpen(true);
+  };
+
+  const getModuleCount = (user: UserProfile) => {
+    if (user.role === "admin") return availableModules.length;
+    return user.allowed_modules?.length || 0;
+  };
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Quản lý người dùng</CardTitle>
-            <CardDescription>Tạo, chỉnh sửa và xóa tài khoản người dùng</CardDescription>
+            <CardDescription>Tạo, chỉnh sửa và phân quyền tài khoản người dùng</CardDescription>
           </div>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -300,26 +351,6 @@ export const AdminUsers = () => {
                     }
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Vai trò</Label>
-                  <Select
-                    value={newUserData.role}
-                    onValueChange={(value: AppRole) =>
-                      setNewUserData({ ...newUserData, role: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn vai trò" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(roleLabels).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <Button onClick={handleCreateUser} className="w-full">
                   Tạo tài khoản
                 </Button>
@@ -337,6 +368,7 @@ export const AdminUsers = () => {
               <TableRow>
                 <TableHead>Họ và tên</TableHead>
                 <TableHead>Vai trò</TableHead>
+                <TableHead>Quyền truy cập</TableHead>
                 <TableHead className="text-right">Hành động</TableHead>
               </TableRow>
             </TableHeader>
@@ -352,19 +384,25 @@ export const AdminUsers = () => {
                       {roleLabels[user.role as AppRole] || user.role}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {user.role === "admin" 
+                        ? "Toàn quyền" 
+                        : `${getModuleCount(user)}/${availableModules.length} module`
+                      }
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-right space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setNewRole(user.role as AppRole || "user");
-                        setRoleDialogOpen(true);
-                      }}
-                    >
-                      <Shield className="w-4 h-4 mr-1" />
-                      Phân quyền
-                    </Button>
+                    {user.role !== "admin" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openPermissionDialog(user)}
+                      >
+                        <Shield className="w-4 h-4 mr-1" />
+                        Phân quyền
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -376,14 +414,16 @@ export const AdminUsers = () => {
                       <Key className="w-4 h-4 mr-1" />
                       Đổi mật khẩu
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setDeleteUserId(user.id)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Xóa
-                    </Button>
+                    {user.role !== "admin" && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeleteUserId(user.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Xóa
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -392,43 +432,53 @@ export const AdminUsers = () => {
         )}
       </CardContent>
 
-      {/* Role Dialog */}
-      <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
-        <DialogContent>
+      {/* Permission Dialog with Checkboxes */}
+      <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Phân quyền</DialogTitle>
+            <DialogTitle>Phân quyền truy cập</DialogTitle>
             <DialogDescription>
-              Thay đổi vai trò cho {selectedUser?.full_name}
+              Chọn các module mà <strong>{selectedUser?.full_name}</strong> được phép truy cập
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Vai trò mới</Label>
-              <Select value={newRole} onValueChange={(value: AppRole) => setNewRole(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn vai trò" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(roleLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={selectAllModules}>
+                Chọn tất cả
+              </Button>
+              <Button variant="outline" size="sm" onClick={deselectAllModules}>
+                Bỏ chọn tất cả
+              </Button>
             </div>
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p><strong>Quyền truy cập:</strong></p>
-              <ul className="list-disc list-inside">
-                {newRole === "admin" && <li>Toàn quyền truy cập tất cả các mục</li>}
-                {newRole === "accountant" && <li>Kế toán, Quản lí kho, Dự án</li>}
-                {newRole === "hr_admin" && <li>Nhiệm vụ, Nhân sự</li>}
-                {newRole === "project_manager" && <li>Dự án, Nhiệm vụ, Quản lí kho</li>}
-                {newRole === "user" && <li>Chỉ xem tổng quan</li>}
-              </ul>
+            <div className="grid grid-cols-1 gap-3 max-h-[300px] overflow-y-auto">
+              {availableModules.map((module) => (
+                <div 
+                  key={module.id} 
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <Checkbox
+                    id={module.id}
+                    checked={selectedModules.includes(module.id)}
+                    onCheckedChange={() => toggleModule(module.id)}
+                  />
+                  <Label 
+                    htmlFor={module.id} 
+                    className="flex-1 cursor-pointer font-normal"
+                  >
+                    {module.label}
+                  </Label>
+                </div>
+              ))}
             </div>
-            <Button onClick={handleUpdateRole} className="w-full">
-              Cập nhật vai trò
+            <div className="text-sm text-muted-foreground">
+              Đã chọn: {selectedModules.length}/{availableModules.length} module
+            </div>
+            <Button 
+              onClick={handleSavePermissions} 
+              className="w-full"
+              disabled={savingPermissions}
+            >
+              {savingPermissions ? "Đang lưu..." : "Lưu quyền truy cập"}
             </Button>
           </div>
         </DialogContent>

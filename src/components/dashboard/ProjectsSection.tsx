@@ -12,6 +12,8 @@ import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { ProjectDetailDialog } from "@/components/projects/ProjectDetailDialog";
+import { ExportButtons } from "@/components/ExportButtons";
+import { exportToExcel, exportToPDF, projectExportConfig } from "@/lib/exportUtils";
 
 type ProjectStatus = "planning" | "in_progress" | "completed" | "on_hold";
 type ProjectPriority = "low" | "medium" | "high" | "urgent";
@@ -226,17 +228,33 @@ export const ProjectsSection = () => {
     on_hold: "Tạm dừng",
   };
 
+  const handleExportProjects = (format: "excel" | "pdf") => {
+    const options = {
+      title: "Báo cáo Dự án",
+      filename: "bao_cao_du_an",
+      ...projectExportConfig,
+      data: projects || [],
+    };
+    format === "excel" ? exportToExcel(options) : exportToPDF(options);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-2xl font-bold">Quản lý dự án</h2>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingProject(null)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Tạo dự án mới
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <ExportButtons
+            onExportExcel={() => handleExportProjects("excel")}
+            onExportPDF={() => handleExportProjects("pdf")}
+            disabled={isLoading || !projects?.length}
+          />
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setEditingProject(null)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Tạo dự án mới
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -363,6 +381,7 @@ export const ProjectsSection = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {isLoading ? (

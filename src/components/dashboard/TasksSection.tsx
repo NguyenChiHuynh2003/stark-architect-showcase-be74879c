@@ -28,9 +28,14 @@ interface Task {
   projects?: {
     name: string;
   };
-  profiles?: {
-    full_name: string;
-  };
+  assignee_name?: string;
+}
+
+interface Employee {
+  id: string;
+  full_name: string;
+  position: string | null;
+  department: string | null;
 }
 
 interface Project {
@@ -38,19 +43,12 @@ interface Project {
   name: string;
 }
 
-interface TeamMember {
-  user_id: string;
-  profiles: {
-    full_name: string;
-  };
-}
-
 export const TasksSection = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -72,12 +70,26 @@ export const TasksSection = () => {
   useEffect(() => {
     fetchTasks();
     fetchProjects();
+    fetchEmployees();
   }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, full_name, position, department")
+        .order("full_name");
+
+      if (error) throw error;
+      setEmployees(data || []);
+    } catch (error: any) {
+      console.error("Error fetching employees:", error);
+    }
+  };
 
   const fetchTasks = async () => {
     try {
-      // Fetch tasks with projects
-      const { data: tasksData, error: tasksError } = await supabase
+      const { data, error } = await supabase
         .from("tasks")
         .select(`
           *,
@@ -85,23 +97,8 @@ export const TasksSection = () => {
         `)
         .order("created_at", { ascending: false });
 
-      if (tasksError) throw tasksError;
-
-      // Fetch profiles separately
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("id, full_name");
-
-      // Merge tasks with profiles
-      const tasksWithProfiles = (tasksData || []).map(task => {
-        const profile = profilesData?.find(p => p.id === task.assigned_to);
-        return {
-          ...task,
-          profiles: profile ? { full_name: profile.full_name } : null
-        };
-      });
-
-      setTasks(tasksWithProfiles as any);
+      if (error) throw error;
+      setTasks(data as any || []);
     } catch (error: any) {
       toast({
         title: "Lỗi",
@@ -127,43 +124,8 @@ export const TasksSection = () => {
     }
   };
 
-  const fetchTeamMembers = async (projectId: string) => {
-    try {
-      // Fetch team members
-      const { data: membersData, error: membersError } = await supabase
-        .from("team_members")
-        .select("user_id")
-        .eq("project_id", projectId);
-
-      if (membersError) throw membersError;
-
-      // Fetch profiles separately
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("id, full_name");
-
-      // Merge team members with profiles
-      const membersWithProfiles = (membersData || []).map(member => {
-        const profile = profilesData?.find(p => p.id === member.user_id);
-        return {
-          user_id: member.user_id,
-          profiles: { full_name: profile?.full_name || "Unknown" }
-        };
-      });
-
-      setTeamMembers(membersWithProfiles);
-    } catch (error: any) {
-      console.error("Error fetching team members:", error);
-    }
-  };
-
   const handleProjectChange = (projectId: string) => {
     setFormData({ ...formData, project_id: projectId, assigned_to: "" });
-    if (projectId) {
-      fetchTeamMembers(projectId);
-    } else {
-      setTeamMembers([]);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -231,9 +193,6 @@ export const TasksSection = () => {
       project_id: task.project_id,
       assigned_to: task.assigned_to || "",
     });
-    if (task.project_id) {
-      fetchTeamMembers(task.project_id);
-    }
     setDialogOpen(true);
   };
 
@@ -275,7 +234,6 @@ export const TasksSection = () => {
       assigned_to: "",
     });
     setEditingTask(null);
-    setTeamMembers([]);
   };
 
   const getStatusBadge = (status: string) => {
@@ -393,19 +351,18 @@ export const TasksSection = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="assigned_to">Phân công</Label>
+                    <Label htmlFor="assigned_to">Người thực hiện</Label>
                     <Select
                       value={formData.assigned_to}
                       onValueChange={(value) => setFormData({ ...formData, assigned_to: value })}
-                      disabled={!formData.project_id}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn người thực hiện" />
+                        <SelectValue placeholder="Chọn nhân sự" />
                       </SelectTrigger>
                       <SelectContent>
-                        {teamMembers.map((member) => (
-                          <SelectItem key={member.user_id} value={member.user_id}>
-                            {member.profiles.full_name}
+                        {employees.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.full_name} {employee.position && `- ${employee.position}`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -535,11 +492,15 @@ export const TasksSection = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTasks.map((task) => (
+              {filteredTasks.map((task) => {
+                const assigneeName = task.assigned_to 
+                  ? employees.find(e => e.id === task.assigned_to)?.full_name || "Chưa rõ"
+                  : "Chưa phân công";
+                return (
                 <TableRow key={task.id}>
                   <TableCell className="font-medium">{task.title}</TableCell>
                   <TableCell>{task.projects?.name}</TableCell>
-                  <TableCell>{task.profiles?.full_name || "Chưa phân công"}</TableCell>
+                  <TableCell>{assigneeName}</TableCell>
                   <TableCell>{getStatusBadge(task.status)}</TableCell>
                   <TableCell>{getPriorityBadge(task.priority)}</TableCell>
                   <TableCell>
@@ -558,7 +519,8 @@ export const TasksSection = () => {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}

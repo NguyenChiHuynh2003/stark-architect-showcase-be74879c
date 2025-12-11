@@ -117,12 +117,12 @@ export function ContractDialog({ open, onOpenChange, contract, onSuccess, projec
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="project_id">Dự án</Label>
-              <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
+              <Select value={formData.project_id || "none"} onValueChange={(value) => setFormData({ ...formData, project_id: value === "none" ? "" : value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn dự án" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Không chọn</SelectItem>
+                  <SelectItem value="none">Không chọn</SelectItem>
                   {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}

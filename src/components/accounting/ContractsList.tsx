@@ -9,6 +9,8 @@ import { ContractDialog } from "./ContractDialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { ExportButtons } from "@/components/ExportButtons";
+import { exportToExcel, exportToPDF, contractExportConfig } from "@/lib/exportUtils";
 
 type Contract = Tables<"contracts"> & {
   projects?: { name: string } | null;
@@ -123,9 +125,23 @@ export function ContractsList({ filterType }: ContractsListProps) {
     return new Intl.NumberFormat('vi-VN').format(value);
   };
 
+  const handleExportContracts = (format: "excel" | "pdf") => {
+    const options = {
+      title: filterType === "appendix" ? "Báo cáo Phụ lục Hợp đồng" : "Báo cáo Hợp đồng",
+      filename: filterType === "appendix" ? "bao_cao_phu_luc" : "bao_cao_hop_dong",
+      ...contractExportConfig,
+      data: filteredContracts,
+      summary: [
+        { label: "Tổng số hợp đồng", value: filteredContracts.length.toString() },
+        { label: "Tổng giá trị", value: formatCurrency(filteredContracts.reduce((s, c) => s + Number(c.contract_value || 0), 0)) + " đ" },
+      ],
+    };
+    format === "excel" ? exportToExcel(options) : exportToPDF(options);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center gap-4">
+      <div className="flex justify-between items-center gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -135,10 +151,17 @@ export function ContractsList({ filterType }: ContractsListProps) {
             className="pl-8"
           />
         </div>
-        <Button onClick={handleAdd}>
-          <Plus className="mr-2 h-4 w-4" />
-          Thêm hợp đồng
-        </Button>
+        <div className="flex gap-2">
+          <ExportButtons
+            onExportExcel={() => handleExportContracts("excel")}
+            onExportPDF={() => handleExportContracts("pdf")}
+            disabled={loading || filteredContracts.length === 0}
+          />
+          <Button onClick={handleAdd}>
+            <Plus className="mr-2 h-4 w-4" />
+            Thêm hợp đồng
+          </Button>
+        </div>
       </div>
 
       <div className="border rounded-lg">

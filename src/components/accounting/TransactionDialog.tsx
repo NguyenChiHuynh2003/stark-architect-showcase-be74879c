@@ -235,14 +235,14 @@ export const TransactionDialog = ({ open, onOpenChange, transaction, onSuccess }
           <div className="space-y-2">
             <Label htmlFor="project_id">Dự án (tùy chọn)</Label>
             <Select
-              value={formData.project_id}
-              onValueChange={(value) => setFormData({ ...formData, project_id: value })}
+              value={formData.project_id || "none"}
+              onValueChange={(value) => setFormData({ ...formData, project_id: value === "none" ? "" : value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Chọn dự án" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Không liên kết</SelectItem>
+                <SelectItem value="none">Không liên kết</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}

@@ -177,44 +177,11 @@ $$;
 
 
 --
--- Name: is_project_owner(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.is_project_owner(_project_id uuid, _user_id uuid) RETURNS boolean
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.projects
-    WHERE id = _project_id AND created_by = _user_id
-  )
-$$;
-
-
---
--- Name: is_team_member(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.is_team_member(_project_id uuid, _user_id uuid) RETURNS boolean
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.team_members
-    WHERE project_id = _project_id AND user_id = _user_id
-  )
-$$;
-
-
---
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
     LANGUAGE plpgsql
-    SET search_path TO 'public'
     AS $$
 BEGIN
   NEW.updated_at = now();
@@ -323,7 +290,14 @@ CREATE TABLE public.asset_master_data (
     inventory_item_id uuid,
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    brand text,
+    unit text,
+    quantity_supplied_previous numeric DEFAULT 0,
+    quantity_requested numeric DEFAULT 0,
+    quantity_per_contract numeric DEFAULT 0,
+    installation_scope text,
+    notes text
 );
 
 
@@ -609,16 +583,15 @@ CREATE TABLE public.project_items (
     project_id uuid NOT NULL,
     item_name text NOT NULL,
     description text,
-    quantity numeric DEFAULT 1,
-    unit text DEFAULT 'cái'::text,
-    unit_price numeric DEFAULT 0,
-    total_price numeric DEFAULT 0,
-    status text DEFAULT 'pending'::text,
-    completion_percentage numeric DEFAULT 0,
-    assigned_to uuid,
+    quantity numeric DEFAULT 1 NOT NULL,
+    unit text DEFAULT 'cái'::text NOT NULL,
+    unit_price numeric DEFAULT 0 NOT NULL,
+    total_price numeric DEFAULT 0 NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    completion_percentage numeric DEFAULT 0 NOT NULL,
     start_date date,
     end_date date,
-    created_by uuid NOT NULL,
+    created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -633,13 +606,13 @@ CREATE TABLE public.project_kpis (
     project_id uuid NOT NULL,
     kpi_name text NOT NULL,
     description text,
-    target_value numeric DEFAULT 0,
-    current_value numeric DEFAULT 0,
-    unit text DEFAULT '%'::text,
-    weight numeric DEFAULT 1,
-    status text DEFAULT 'pending'::text,
+    target_value numeric DEFAULT 100 NOT NULL,
+    current_value numeric DEFAULT 0 NOT NULL,
+    unit text DEFAULT '%'::text NOT NULL,
+    weight numeric DEFAULT 1 NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
     due_date date,
-    created_by uuid NOT NULL,
+    created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -695,6 +668,19 @@ CREATE TABLE public.team_members (
     user_id uuid NOT NULL,
     role text NOT NULL,
     joined_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: user_permissions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_permissions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    allowed_modules text[] DEFAULT ARRAY['overview'::text],
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -959,6 +945,22 @@ ALTER TABLE ONLY public.team_members
 
 
 --
+-- Name: user_permissions user_permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_permissions
+    ADD CONSTRAINT user_permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_permissions user_permissions_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_permissions
+    ADD CONSTRAINT user_permissions_user_id_key UNIQUE (user_id);
+
+
+--
 -- Name: user_roles user_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1196,6 +1198,13 @@ CREATE TRIGGER update_project_items_updated_at BEFORE UPDATE ON public.project_i
 --
 
 CREATE TRIGGER update_project_kpis_updated_at BEFORE UPDATE ON public.project_kpis FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: user_permissions update_user_permissions_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER update_user_permissions_updated_at BEFORE UPDATE ON public.user_permissions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -1447,6 +1456,14 @@ ALTER TABLE ONLY public.projects
 
 
 --
+-- Name: tasks tasks_assigned_to_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tasks
+    ADD CONSTRAINT tasks_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES auth.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: tasks tasks_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1585,6 +1602,13 @@ CREATE POLICY "Admins can manage maintenance records" ON public.maintenance_reco
 
 
 --
+-- Name: user_permissions Admins can manage permissions; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admins can manage permissions" ON public.user_permissions USING (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+
+--
 -- Name: product_groups Admins can manage product groups; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1620,6 +1644,13 @@ CREATE POLICY "Authenticated users can create projects" ON public.projects FOR I
 
 
 --
+-- Name: goods_receipt_notes Authenticated users can view GRN; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authenticated users can view GRN" ON public.goods_receipt_notes FOR SELECT USING (true);
+
+
+--
 -- Name: grn_items Authenticated users can view GRN items; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1627,10 +1658,38 @@ CREATE POLICY "Authenticated users can view GRN items" ON public.grn_items FOR S
 
 
 --
+-- Name: asset_master_data Authenticated users can view asset master data; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authenticated users can view asset master data" ON public.asset_master_data FOR SELECT USING (true);
+
+
+--
+-- Name: brands Authenticated users can view brands; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authenticated users can view brands" ON public.brands FOR SELECT TO authenticated USING (true);
+
+
+--
 -- Name: product_categories Authenticated users can view categories; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Authenticated users can view categories" ON public.product_categories FOR SELECT TO authenticated USING (true);
+
+
+--
+-- Name: contract_guarantees Authenticated users can view contract guarantees; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authenticated users can view contract guarantees" ON public.contract_guarantees FOR SELECT USING (true);
+
+
+--
+-- Name: contracts Authenticated users can view contracts; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authenticated users can view contracts" ON public.contracts FOR SELECT USING (true);
 
 
 --
@@ -1648,6 +1707,13 @@ CREATE POLICY "Authenticated users can view disposals" ON public.asset_disposals
 
 
 --
+-- Name: employees Authenticated users can view employees; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authenticated users can view employees" ON public.employees FOR SELECT USING (true);
+
+
+--
 -- Name: inventory_items Authenticated users can view inventory items; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1662,6 +1728,13 @@ CREATE POLICY "Authenticated users can view location history" ON public.asset_lo
 
 
 --
+-- Name: maintenance_records Authenticated users can view maintenance records; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Authenticated users can view maintenance records" ON public.maintenance_records FOR SELECT USING (true);
+
+
+--
 -- Name: product_groups Authenticated users can view product groups; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1669,24 +1742,10 @@ CREATE POLICY "Authenticated users can view product groups" ON public.product_gr
 
 
 --
--- Name: accounting_transactions Financial role access; Type: POLICY; Schema: public; Owner: -
+-- Name: accounting_transactions Authenticated users can view transactions; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Financial role access" ON public.accounting_transactions FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'accountant'::public.app_role)));
-
-
---
--- Name: contract_guarantees Financial role guarantee access; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Financial role guarantee access" ON public.contract_guarantees FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'accountant'::public.app_role)));
-
-
---
--- Name: brands Inventory users can view brands; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Inventory users can view brands" ON public.brands FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'accountant'::public.app_role) OR public.has_role(auth.uid(), 'project_manager'::public.app_role)));
+CREATE POLICY "Authenticated users can view transactions" ON public.accounting_transactions FOR SELECT USING (true);
 
 
 --
@@ -1711,30 +1770,30 @@ CREATE POLICY "Project creators and admins can update projects" ON public.projec
 
 
 --
--- Name: project_kpis Project owners can manage KPIs; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Project owners can manage KPIs" ON public.project_kpis USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = project_kpis.project_id) AND (projects.created_by = auth.uid()))))));
-
-
---
--- Name: project_items Project owners can manage items; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Project owners can manage items" ON public.project_items USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = project_items.project_id) AND (projects.created_by = auth.uid()))))));
-
-
---
 -- Name: materials Project owners can manage materials; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Project owners can manage materials" ON public.materials TO authenticated USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
    FROM public.projects
   WHERE ((projects.id = materials.project_id) AND (projects.created_by = auth.uid()))))));
+
+
+--
+-- Name: project_kpis Project owners can manage project KPIs; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Project owners can manage project KPIs" ON public.project_kpis USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
+   FROM public.projects
+  WHERE ((projects.id = project_kpis.project_id) AND (projects.created_by = auth.uid()))))));
+
+
+--
+-- Name: project_items Project owners can manage project items; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Project owners can manage project items" ON public.project_items USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
+   FROM public.projects
+  WHERE ((projects.id = project_items.project_id) AND (projects.created_by = auth.uid()))))));
 
 
 --
@@ -1753,43 +1812,6 @@ CREATE POLICY "Project owners can manage requirements" ON public.client_requirem
 CREATE POLICY "Project owners can manage team members" ON public.team_members TO authenticated USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
    FROM public.projects
   WHERE ((projects.id = team_members.project_id) AND (projects.created_by = auth.uid()))))));
-
-
---
--- Name: goods_receipt_notes Role-based GRN access; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Role-based GRN access" ON public.goods_receipt_notes FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'accountant'::public.app_role) OR public.has_role(auth.uid(), 'project_manager'::public.app_role)));
-
-
---
--- Name: asset_master_data Role-based asset master data access; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Role-based asset master data access" ON public.asset_master_data FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'accountant'::public.app_role) OR public.has_role(auth.uid(), 'project_manager'::public.app_role)));
-
-
---
--- Name: contracts Role-based contract access; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Role-based contract access" ON public.contracts FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'accountant'::public.app_role) OR public.has_role(auth.uid(), 'project_manager'::public.app_role) OR (auth.uid() = created_by) OR (EXISTS ( SELECT 1
-   FROM public.team_members tm
-  WHERE ((tm.project_id = contracts.project_id) AND (tm.user_id = auth.uid()))))));
-
-
---
--- Name: employees Role-based employee access; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Role-based employee access" ON public.employees FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'hr_admin'::public.app_role) OR public.has_role(auth.uid(), 'project_manager'::public.app_role)));
-
-
---
--- Name: maintenance_records Role-based maintenance records access; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Role-based maintenance records access" ON public.maintenance_records FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'accountant'::public.app_role) OR public.has_role(auth.uid(), 'project_manager'::public.app_role) OR (auth.uid() = reported_by)));
 
 
 --
@@ -1815,28 +1837,6 @@ CREATE POLICY "Task creators and project owners can delete tasks" ON public.task
 CREATE POLICY "Task creators and project owners can update tasks" ON public.tasks FOR UPDATE TO authenticated USING (((auth.uid() = created_by) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
    FROM public.projects
   WHERE ((projects.id = tasks.project_id) AND (projects.created_by = auth.uid()))))));
-
-
---
--- Name: project_kpis Team members can view project KPIs; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Team members can view project KPIs" ON public.project_kpis FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = project_kpis.project_id) AND ((projects.created_by = auth.uid()) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-           FROM public.team_members
-          WHERE ((team_members.project_id = projects.id) AND (team_members.user_id = auth.uid())))))))));
-
-
---
--- Name: project_items Team members can view project items; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Team members can view project items" ON public.project_items FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = project_items.project_id) AND ((projects.created_by = auth.uid()) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-           FROM public.team_members
-          WHERE ((team_members.project_id = projects.id) AND (team_members.user_id = auth.uid())))))))));
 
 
 --
@@ -1870,6 +1870,20 @@ CREATE POLICY "Users can update their own notifications" ON public.notifications
 
 
 --
+-- Name: profiles Users can view all profiles; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can view all profiles" ON public.profiles FOR SELECT TO authenticated USING (true);
+
+
+--
+-- Name: user_roles Users can view all roles; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can view all roles" ON public.user_roles FOR SELECT TO authenticated USING (true);
+
+
+--
 -- Name: handover_slips Users can view handover slips; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1888,27 +1902,34 @@ CREATE POLICY "Users can view materials in their projects" ON public.materials F
 
 
 --
--- Name: profiles Users can view own profile or team members; Type: POLICY; Schema: public; Owner: -
+-- Name: project_kpis Users can view project KPIs in their projects; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can view own profile or team members" ON public.profiles FOR SELECT USING (((auth.uid() = id) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-   FROM (public.team_members tm1
-     JOIN public.team_members tm2 ON ((tm1.project_id = tm2.project_id)))
-  WHERE ((tm1.user_id = auth.uid()) AND (tm2.user_id = profiles.id))))));
+CREATE POLICY "Users can view project KPIs in their projects" ON public.project_kpis FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM public.projects
+  WHERE ((projects.id = project_kpis.project_id) AND ((projects.created_by = auth.uid()) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
+           FROM public.team_members
+          WHERE ((team_members.project_id = projects.id) AND (team_members.user_id = auth.uid())))))))));
 
 
 --
--- Name: user_roles Users can view own role or admins view all; Type: POLICY; Schema: public; Owner: -
+-- Name: project_items Users can view project items in their projects; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can view own role or admins view all" ON public.user_roles FOR SELECT USING (((auth.uid() = user_id) OR public.has_role(auth.uid(), 'admin'::public.app_role)));
+CREATE POLICY "Users can view project items in their projects" ON public.project_items FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM public.projects
+  WHERE ((projects.id = project_items.project_id) AND ((projects.created_by = auth.uid()) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
+           FROM public.team_members
+          WHERE ((team_members.project_id = projects.id) AND (team_members.user_id = auth.uid())))))))));
 
 
 --
 -- Name: projects Users can view projects they're involved in; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can view projects they're involved in" ON public.projects FOR SELECT USING (((auth.uid() = created_by) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR public.is_team_member(id, auth.uid())));
+CREATE POLICY "Users can view projects they're involved in" ON public.projects FOR SELECT TO authenticated USING (((auth.uid() = created_by) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
+   FROM public.team_members
+  WHERE ((team_members.project_id = projects.id) AND (team_members.user_id = auth.uid()))))));
 
 
 --
@@ -1937,7 +1958,9 @@ CREATE POLICY "Users can view tasks in their projects" ON public.tasks FOR SELEC
 -- Name: team_members Users can view team members in their projects; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can view team members in their projects" ON public.team_members FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.is_project_owner(project_id, auth.uid()) OR public.is_team_member(project_id, auth.uid())));
+CREATE POLICY "Users can view team members in their projects" ON public.team_members FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.projects
+  WHERE ((projects.id = team_members.project_id) AND ((projects.created_by = auth.uid()) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (team_members.user_id = auth.uid()))))));
 
 
 --
@@ -1952,6 +1975,13 @@ CREATE POLICY "Users can view their allocations" ON public.asset_allocations FOR
 --
 
 CREATE POLICY "Users can view their own notifications" ON public.notifications FOR SELECT USING ((auth.uid() = user_id));
+
+
+--
+-- Name: user_permissions Users can view their own permissions; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can view their own permissions" ON public.user_permissions FOR SELECT USING ((auth.uid() = user_id));
 
 
 --
@@ -2109,6 +2139,12 @@ ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: user_permissions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.user_permissions ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: user_roles; Type: ROW SECURITY; Schema: public; Owner: -

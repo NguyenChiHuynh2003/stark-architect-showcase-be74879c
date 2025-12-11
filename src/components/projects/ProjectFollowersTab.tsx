@@ -21,24 +21,29 @@ export const ProjectFollowersTab = ({ projectId }: ProjectFollowersTabProps) => 
   const { data: followers = [] } = useQuery({
     queryKey: ["project-followers", projectId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get team members
+      const { data: members, error: membersError } = await supabase
         .from("team_members")
-        .select(`
-          id,
-          user_id,
-          joined_at,
-          role,
-          profiles:user_id (
-            id,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select("id, user_id, joined_at, role")
         .eq("project_id", projectId)
         .order("joined_at", { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (membersError) throw membersError;
+      if (!members || members.length === 0) return [];
+
+      // Then get profiles for those members
+      const userIds = members.map(m => m.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
+      if (profilesError) throw profilesError;
+
+      // Combine the data
+      return members.map(member => ({
+        ...member,
+        profiles: profiles?.find(p => p.id === member.user_id) || null
+      }));
     },
   });
 

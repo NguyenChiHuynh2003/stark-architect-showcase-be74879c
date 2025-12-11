@@ -17,6 +17,8 @@ import { X, UserPlus, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientRequirementsTab } from "./ClientRequirementsTab";
 import { ProjectFollowersTab } from "./ProjectFollowersTab";
+import { ProjectItemsTab } from "./ProjectItemsTab";
+import { ProjectKPIsTab } from "./ProjectKPIsTab";
 
 interface ProjectDetailDialogProps {
   projectId: string;
@@ -51,19 +53,28 @@ export const ProjectDetailDialog = ({
   const { data: teamMembers } = useQuery({
     queryKey: ["team-members", projectId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get team members
+      const { data: members, error: membersError } = await supabase
         .from("team_members")
-        .select(`
-          *,
-          profiles:user_id (
-            id,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select("*")
         .eq("project_id", projectId);
-      if (error) throw error;
-      return data;
+      if (membersError) throw membersError;
+      
+      if (!members || members.length === 0) return [];
+      
+      // Then get profiles for those members
+      const userIds = members.map(m => m.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
+      if (profilesError) throw profilesError;
+      
+      // Combine the data
+      return members.map(member => ({
+        ...member,
+        profiles: profiles?.find(p => p.id === member.user_id) || null
+      }));
     },
     enabled: open,
   });
@@ -80,18 +91,6 @@ export const ProjectDetailDialog = ({
     enabled: open,
   });
 
-  const { data: materials } = useQuery({
-    queryKey: ["materials", projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("materials")
-        .select("*")
-        .eq("project_id", projectId);
-      if (error) throw error;
-      return data;
-    },
-    enabled: open,
-  });
 
   const addMemberMutation = useMutation({
     mutationFn: async () => {
@@ -303,43 +302,11 @@ export const ProjectDetailDialog = ({
           </TabsContent>
 
           <TabsContent value="materials" className="space-y-4">
-            {materials && materials.length > 0 ? (
-              <div className="space-y-2">
-                {materials.map((material: any) => (
-                  <div
-                    key={material.id}
-                    className="p-3 border rounded-lg flex justify-between items-center"
-                  >
-                    <div>
-                      <div className="font-medium">{material.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {material.quantity} {material.unit}
-                        {material.unit_price &&
-                          ` • ${new Intl.NumberFormat("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                          }).format(material.unit_price)}`}
-                      </div>
-                    </div>
-                    {material.supplier && (
-                      <div className="text-sm text-muted-foreground">
-                        NCC: {material.supplier}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Chưa có hạng mục nào
-              </div>
-            )}
+            <ProjectItemsTab projectId={projectId} />
           </TabsContent>
 
           <TabsContent value="kpi">
-            <div className="text-center py-8 text-muted-foreground">
-              Chưa có KPI nào
-            </div>
+            <ProjectKPIsTab projectId={projectId} />
           </TabsContent>
         </Tabs>
       </DialogContent>

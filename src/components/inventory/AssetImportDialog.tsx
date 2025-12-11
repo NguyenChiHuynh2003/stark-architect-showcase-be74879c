@@ -328,8 +328,12 @@ export function AssetImportDialog({ open, onClose }: AssetImportDialogProps) {
                         <TableCell>{asset.brand || "-"}</TableCell>
                         <TableCell>{asset.unit}</TableCell>
                         <TableCell className="text-right">{asset.quantity_requested}</TableCell>
-                        <TableCell className="max-w-[150px] truncate">{asset.installation_scope || "-"}</TableCell>
-                        <TableCell className="max-w-[150px] truncate">{asset.notes || "-"}</TableCell>
+                        <TableCell className="max-w-[120px]" title={asset.installation_scope || ""}>
+                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap">{asset.installation_scope || "-"}</span>
+                        </TableCell>
+                        <TableCell className="max-w-[120px]" title={asset.notes || ""}>
+                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap">{asset.notes || "-"}</span>
+                        </TableCell>
                         <TableCell>
                           {asset.isValid ? (
                             <Check className="h-4 w-4 text-green-500" />

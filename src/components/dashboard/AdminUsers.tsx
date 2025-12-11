@@ -70,15 +70,15 @@ export const AdminUsers = () => {
       if (userIds.length > 0) {
         const [rolesRes, permsRes] = await Promise.all([
           supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
-          supabase.from("user_permissions").select("user_id, allowed_modules").in("user_id", userIds),
+          (supabase.from("user_permissions" as any).select("user_id, allowed_modules").in("user_id", userIds) as any),
         ]);
         
-        rolesMap = (rolesRes.data || []).reduce((acc, r) => {
+        rolesMap = (rolesRes.data || []).reduce((acc: Record<string, string>, r: any) => {
           acc[r.user_id] = r.role;
           return acc;
         }, {} as Record<string, string>);
 
-        permissionsMap = (permsRes.data || []).reduce((acc, p) => {
+        permissionsMap = (permsRes.data || []).reduce((acc: Record<string, string[]>, p: any) => {
           acc[p.user_id] = p.allowed_modules || [];
           return acc;
         }, {} as Record<string, string[]>);
@@ -198,14 +198,14 @@ export const AdminUsers = () => {
 
     setSavingPermissions(true);
     try {
-      // Upsert permissions
-      const { error } = await supabase
-        .from("user_permissions")
+      // Upsert permissions - using type assertion until types are regenerated
+      const { error } = await (supabase
+        .from("user_permissions" as any)
         .upsert({
           user_id: selectedUser.id,
           allowed_modules: selectedModules,
           updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
+        }, { onConflict: "user_id" }) as any);
 
       if (error) throw error;
 

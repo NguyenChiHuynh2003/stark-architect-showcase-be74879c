@@ -57,12 +57,12 @@ export const useUserRole = () => {
         if (roleData?.role === "admin") {
           setAllowedModules(availableModules.map(m => m.id));
         } else {
-          // Fetch module permissions
-          const { data: permData } = await supabase
-            .from("user_permissions")
+          // Fetch module permissions - using type assertion until types are regenerated
+          const { data: permData } = await (supabase
+            .from("user_permissions" as any)
             .select("allowed_modules")
             .eq("user_id", user.id)
-            .maybeSingle();
+            .maybeSingle() as any);
 
           setAllowedModules(permData?.allowed_modules || ["overview"]);
         }

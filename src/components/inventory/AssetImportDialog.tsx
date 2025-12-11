@@ -177,6 +177,13 @@ export function AssetImportDialog({ open, onClose }: AssetImportDialogProps) {
 
     setImporting(true);
     try {
+      // Build metadata string to include in notes
+      const metadataStr = [
+        metadata.project_name && `Công trình: ${metadata.project_name}`,
+        metadata.project_location && `Địa chỉ: ${metadata.project_location}`,
+        metadata.category && `Hạng mục: ${metadata.category}`,
+      ].filter(Boolean).join(" | ");
+
       const assetsToInsert = validAssets.map((asset, index) => ({
         asset_id: `IMP-${Date.now()}-${index + 1}`,
         sku: `SKU-${Date.now()}-${index + 1}`,
@@ -187,10 +194,7 @@ export function AssetImportDialog({ open, onClose }: AssetImportDialogProps) {
         unit: asset.unit,
         quantity_requested: asset.quantity_requested,
         installation_scope: asset.installation_scope || null,
-        notes: asset.notes || null,
-        project_name: metadata.project_name || null,
-        project_location: metadata.project_location || null,
-        category: metadata.category || null,
+        notes: [asset.notes, metadataStr].filter(Boolean).join(" | ") || null,
         created_by: user.id,
         current_status: "in_stock" as const,
         cost_basis: 0,

@@ -13,6 +13,8 @@ import { Plus, Edit, Trash2, CheckCircle2, Clock, AlertCircle, Search, Filter } 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { ExportButtons } from "@/components/ExportButtons";
+import { exportToExcel, exportToPDF, taskExportConfig } from "@/lib/exportUtils";
 
 interface Task {
   id: string;
@@ -280,16 +282,42 @@ export const TasksSection = () => {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  const handleExportTasks = (format: "excel" | "pdf") => {
+    const exportData = filteredTasks.map(task => ({
+      ...task,
+      project_name: task.projects?.name || "",
+      priority: task.priority === "low" ? "Thấp" : task.priority === "medium" ? "Trung bình" : task.priority === "high" ? "Cao" : task.priority,
+    }));
+
+    const options = {
+      title: "Danh sách nhiệm vụ",
+      filename: "danh_sach_nhiem_vu",
+      columns: taskExportConfig.columns,
+      data: exportData,
+    };
+
+    if (format === "excel") {
+      exportToExcel(options);
+    } else {
+      exportToPDF(options);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <CardTitle>Quản lý nhiệm vụ</CardTitle>
               <CardDescription>Tạo và theo dõi các nhiệm vụ trong dự án</CardDescription>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={(open) => {
+            <div className="flex items-center gap-2">
+              <ExportButtons
+                onExportExcel={() => handleExportTasks("excel")}
+                onExportPDF={() => handleExportTasks("pdf")}
+              />
+              <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
           }}>
@@ -427,6 +455,7 @@ export const TasksSection = () => {
               </form>
             </DialogContent>
           </Dialog>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-3">

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw, Plus, FileText, Upload, Trash2 } from "lucide-react";
+import { RefreshCw, Plus, FileText, Upload, Trash2, Eye } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { AssetMasterDialog } from "./AssetMasterDialog";
 import { AssetImportDialog } from "./AssetImportDialog";
 import { ExportButtons } from "@/components/ExportButtons";
@@ -279,8 +284,36 @@ export function AssetMasterList() {
                     <TableCell className="text-right">
                       {percentage.toFixed(1)}%
                     </TableCell>
-                    <TableCell>{asset.installation_scope || "-"}</TableCell>
-                    <TableCell>{asset.notes || "-"}</TableCell>
+                    <TableCell className="max-w-[120px]">
+                      {asset.installation_scope ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="flex items-center gap-1 text-left hover:text-primary transition-colors">
+                              <span className="block max-w-[90px] overflow-hidden text-ellipsis whitespace-nowrap">{asset.installation_scope}</span>
+                              <Eye className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 max-h-60 overflow-auto">
+                            <p className="text-sm whitespace-pre-wrap">{asset.installation_scope}</p>
+                          </PopoverContent>
+                        </Popover>
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell className="max-w-[120px]">
+                      {asset.notes ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="flex items-center gap-1 text-left hover:text-primary transition-colors">
+                              <span className="block max-w-[90px] overflow-hidden text-ellipsis whitespace-nowrap">{asset.notes}</span>
+                              <Eye className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 max-h-60 overflow-auto">
+                            <p className="text-sm whitespace-pre-wrap">{asset.notes}</p>
+                          </PopoverContent>
+                        </Popover>
+                      ) : "-"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button

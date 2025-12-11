@@ -6,6 +6,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation function
+function isValidPassword(password: string): boolean {
+  return typeof password === 'string' && password.length >= 6 && password.length <= 128;
+}
+
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return typeof uuid === 'string' && uuidRegex.test(uuid);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -48,6 +58,14 @@ serve(async (req) => {
     }
 
     const { userId, newPassword } = await req.json();
+
+    // Validate inputs
+    if (!isValidUUID(userId)) {
+      throw new Error("Invalid user ID format");
+    }
+    if (!isValidPassword(newPassword)) {
+      throw new Error("Password must be between 6 and 128 characters");
+    }
 
     // Update user password
     const { data, error } = await supabaseAdmin.auth.admin.updateUserById(

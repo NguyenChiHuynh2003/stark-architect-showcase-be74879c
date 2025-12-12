@@ -33,9 +33,11 @@ interface Task {
   assignee_name?: string;
 }
 
-interface UserProfile {
+interface Employee {
   id: string;
   full_name: string;
+  position: string | null;
+  department: string | null;
 }
 
 interface Project {
@@ -48,7 +50,7 @@ export const TasksSection = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -70,20 +72,20 @@ export const TasksSection = () => {
   useEffect(() => {
     fetchTasks();
     fetchProjects();
-    fetchUserProfiles();
+    fetchEmployees();
   }, []);
 
-  const fetchUserProfiles = async () => {
+  const fetchEmployees = async () => {
     try {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name")
+        .from("employees")
+        .select("id, full_name, position, department")
         .order("full_name");
 
       if (error) throw error;
-      setUserProfiles(data || []);
+      setEmployees(data || []);
     } catch (error: any) {
-      console.error("Error fetching user profiles:", error);
+      console.error("Error fetching employees:", error);
     }
   };
 
@@ -386,9 +388,9 @@ export const TasksSection = () => {
                         <SelectValue placeholder="Chọn nhân sự" />
                       </SelectTrigger>
                       <SelectContent>
-                        {userProfiles.map((profile) => (
-                          <SelectItem key={profile.id} value={profile.id}>
-                            {profile.full_name}
+                        {employees.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.full_name} {employee.position && `- ${employee.position}`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -521,7 +523,7 @@ export const TasksSection = () => {
             <TableBody>
               {filteredTasks.map((task) => {
                 const assigneeName = task.assigned_to 
-                  ? userProfiles.find(p => p.id === task.assigned_to)?.full_name || "Chưa rõ"
+                  ? employees.find(e => e.id === task.assigned_to)?.full_name || "Chưa rõ"
                   : "Chưa phân công";
                 return (
                 <TableRow key={task.id}>

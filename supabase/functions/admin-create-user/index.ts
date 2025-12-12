@@ -63,6 +63,9 @@ serve(async (req) => {
 
     const { email, password, fullName, role } = await req.json();
 
+    // Valid roles matching app_role enum
+    const VALID_ROLES = ['admin', 'user', 'accountant', 'hr_admin', 'project_manager'];
+
     // Validate inputs
     if (!isValidEmail(email)) {
       throw new Error("Invalid email format");
@@ -72,6 +75,9 @@ serve(async (req) => {
     }
     if (!isValidName(fullName)) {
       throw new Error("Full name is required and must be less than 100 characters");
+    }
+    if (role && !VALID_ROLES.includes(role)) {
+      throw new Error("Invalid role specified");
     }
 
     // Create user

@@ -193,7 +193,9 @@ export const ProjectCard = ({
               </div>
               <div className="flex items-center gap-1 text-sm text-muted-foreground ml-2">
                 <Users className="w-4 h-4" />
-                <span>Công việc: {taskStats.total}</span>
+                <span>{teamMembers.length} thành viên</span>
+                <span className="text-muted-foreground/60">•</span>
+                <span>{taskStats.total} công việc</span>
               </div>
             </div>
           </div>

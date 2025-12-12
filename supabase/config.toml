@@ -1,1 +1,4 @@
 project_id = "hejuziknygenweuopegp"
+
+[functions.bootstrap]
+verify_jwt = false

@@ -48,11 +48,18 @@ export const ProjectFollowersTab = ({ projectId }: ProjectFollowersTabProps) => 
   });
 
   const { data: allUsers = [] } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["employees-for-selection"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*");
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, full_name, user_id")
+        .order("full_name");
       if (error) throw error;
-      return data;
+      // Map to use user_id as id if available, otherwise use employee id
+      return data.map(emp => ({
+        id: emp.user_id || emp.id,
+        full_name: emp.full_name,
+      }));
     },
   });
 

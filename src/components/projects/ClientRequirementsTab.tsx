@@ -59,11 +59,18 @@ export const ClientRequirementsTab = ({ projectId }: ClientRequirementsTabProps)
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["employees-for-selection"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*");
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, full_name, user_id")
+        .order("full_name");
       if (error) throw error;
-      return data;
+      return data.map(emp => ({
+        id: emp.user_id || emp.id,
+        full_name: emp.full_name,
+        avatar_url: null,
+      }));
     },
   });
 

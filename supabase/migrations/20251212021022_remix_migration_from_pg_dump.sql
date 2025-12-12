@@ -177,6 +177,40 @@ $$;
 
 
 --
+-- Name: is_project_owner(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_project_owner(_user_id uuid, _project_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.projects p
+    WHERE p.id = _project_id
+      AND p.created_by = _user_id
+  )
+$$;
+
+
+--
+-- Name: is_team_member(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_team_member(_user_id uuid, _project_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.team_members tm
+    WHERE tm.project_id = _project_id
+      AND tm.user_id = _user_id
+  )
+$$;
+
+
+--
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -188,6 +222,32 @@ BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
+$$;
+
+
+--
+-- Name: user_can_access_project(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.user_can_access_project(_user_id uuid, _project_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.projects p
+    WHERE p.id = _project_id
+      AND (
+        p.created_by = _user_id
+        OR public.has_role(_user_id, 'admin')
+        OR EXISTS (
+          SELECT 1
+          FROM public.team_members tm
+          WHERE tm.project_id = p.id
+            AND tm.user_id = _user_id
+        )
+      )
+  )
 $$;
 
 
@@ -1461,7 +1521,7 @@ ALTER TABLE ONLY public.projects
 --
 
 ALTER TABLE ONLY public.tasks
-    ADD CONSTRAINT tasks_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES auth.users(id) ON DELETE SET NULL;
+    ADD CONSTRAINT tasks_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.employees(id) ON DELETE SET NULL;
 
 
 --
@@ -1502,6 +1562,13 @@ ALTER TABLE ONLY public.team_members
 
 ALTER TABLE ONLY public.user_roles
     ADD CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: employees Admins and HR can view all employees, users can view own record; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Admins and HR can view all employees, users can view own record" ON public.employees FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.has_role(auth.uid(), 'hr_admin'::public.app_role) OR (user_id = auth.uid())));
 
 
 --
@@ -1708,13 +1775,6 @@ CREATE POLICY "Authenticated users can view disposals" ON public.asset_disposals
 
 
 --
--- Name: employees Authenticated users can view employees; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Authenticated users can view employees" ON public.employees FOR SELECT USING (true);
-
-
---
 -- Name: inventory_items Authenticated users can view inventory items; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1810,9 +1870,7 @@ CREATE POLICY "Project owners can manage requirements" ON public.client_requirem
 -- Name: team_members Project owners can manage team members; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Project owners can manage team members" ON public.team_members TO authenticated USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = team_members.project_id) AND (projects.created_by = auth.uid()))))));
+CREATE POLICY "Project owners can manage team members" ON public.team_members USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.is_project_owner(auth.uid(), project_id)));
 
 
 --
@@ -1826,27 +1884,21 @@ CREATE POLICY "System can create notifications" ON public.notifications FOR INSE
 -- Name: tasks Task creators and project owners can delete tasks; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Task creators and project owners can delete tasks" ON public.tasks FOR DELETE TO authenticated USING (((auth.uid() = created_by) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = tasks.project_id) AND (projects.created_by = auth.uid()))))));
+CREATE POLICY "Task creators and project owners can delete tasks" ON public.tasks FOR DELETE USING (((auth.uid() = created_by) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR public.user_can_access_project(auth.uid(), project_id)));
 
 
 --
 -- Name: tasks Task creators and project owners can update tasks; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Task creators and project owners can update tasks" ON public.tasks FOR UPDATE TO authenticated USING (((auth.uid() = created_by) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = tasks.project_id) AND (projects.created_by = auth.uid()))))));
+CREATE POLICY "Task creators and project owners can update tasks" ON public.tasks FOR UPDATE USING (((auth.uid() = created_by) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR public.user_can_access_project(auth.uid(), project_id)));
 
 
 --
 -- Name: tasks Users can create tasks in their projects; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can create tasks in their projects" ON public.tasks FOR INSERT TO authenticated WITH CHECK (((auth.uid() = created_by) AND (EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = tasks.project_id) AND ((projects.created_by = auth.uid()) OR public.has_role(auth.uid(), 'admin'::public.app_role)))))));
+CREATE POLICY "Users can create tasks in their projects" ON public.tasks FOR INSERT WITH CHECK (((auth.uid() = created_by) AND public.user_can_access_project(auth.uid(), project_id)));
 
 
 --
@@ -1928,9 +1980,7 @@ CREATE POLICY "Users can view project items in their projects" ON public.project
 -- Name: projects Users can view projects they're involved in; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can view projects they're involved in" ON public.projects FOR SELECT TO authenticated USING (((auth.uid() = created_by) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-   FROM public.team_members
-  WHERE ((team_members.project_id = projects.id) AND (team_members.user_id = auth.uid()))))));
+CREATE POLICY "Users can view projects they're involved in" ON public.projects FOR SELECT USING (((auth.uid() = created_by) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR public.is_team_member(auth.uid(), id)));
 
 
 --
@@ -1948,20 +1998,14 @@ CREATE POLICY "Users can view requirements in their projects" ON public.client_r
 -- Name: tasks Users can view tasks in their projects; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can view tasks in their projects" ON public.tasks FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = tasks.project_id) AND ((projects.created_by = auth.uid()) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (EXISTS ( SELECT 1
-           FROM public.team_members
-          WHERE ((team_members.project_id = projects.id) AND (team_members.user_id = auth.uid())))))))));
+CREATE POLICY "Users can view tasks in their projects" ON public.tasks FOR SELECT USING (public.user_can_access_project(auth.uid(), project_id));
 
 
 --
 -- Name: team_members Users can view team members in their projects; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Users can view team members in their projects" ON public.team_members FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.projects
-  WHERE ((projects.id = team_members.project_id) AND ((projects.created_by = auth.uid()) OR public.has_role(auth.uid(), 'admin'::public.app_role) OR (team_members.user_id = auth.uid()))))));
+CREATE POLICY "Users can view team members in their projects" ON public.team_members FOR SELECT USING ((public.has_role(auth.uid(), 'admin'::public.app_role) OR public.is_project_owner(auth.uid(), project_id) OR (user_id = auth.uid())));
 
 
 --

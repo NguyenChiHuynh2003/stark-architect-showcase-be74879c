@@ -56,42 +56,53 @@ export const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .order("full_name");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
 
-      if (profilesError) throw profilesError;
+      // Use edge function to get all users including newly created ones
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-get-users`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      const userIds = (profiles || []).map(p => p.id);
-      let rolesMap: Record<string, string> = {};
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to fetch users");
+      }
+
+      const { users: fetchedUsers } = await response.json();
+      
+      // Get permissions for all users
+      const userIds = fetchedUsers.map((u: any) => u.id);
       let permissionsMap: Record<string, string[]> = {};
       
       if (userIds.length > 0) {
-        const [rolesRes, permsRes] = await Promise.all([
-          supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
-          (supabase.from("user_permissions" as any).select("user_id, allowed_modules").in("user_id", userIds) as any),
-        ]);
+        const { data: permsData } = await supabase
+          .from("user_permissions" as any)
+          .select("user_id, allowed_modules")
+          .in("user_id", userIds) as any;
         
-        rolesMap = (rolesRes.data || []).reduce((acc: Record<string, string>, r: any) => {
-          acc[r.user_id] = r.role;
-          return acc;
-        }, {} as Record<string, string>);
-
-        permissionsMap = (permsRes.data || []).reduce((acc: Record<string, string[]>, p: any) => {
+        permissionsMap = (permsData || []).reduce((acc: Record<string, string[]>, p: any) => {
           acc[p.user_id] = p.allowed_modules || [];
           return acc;
         }, {} as Record<string, string[]>);
       }
 
-      const usersWithRoles = (profiles || []).map(profile => ({
-        id: profile.id,
-        full_name: profile.full_name,
-        role: rolesMap[profile.id] || "user",
-        allowed_modules: permissionsMap[profile.id] || ["overview"],
+      const usersWithPermissions = fetchedUsers.map((user: any) => ({
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role || "user",
+        allowed_modules: permissionsMap[user.id] || ["overview"],
       }));
 
-      setUsers(usersWithRoles);
+      setUsers(usersWithPermissions);
     } catch (error: any) {
       toast({
         title: "Lỗi",

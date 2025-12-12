@@ -64,6 +64,22 @@ serve(async (req) => {
     );
   }
 
+  // Optional: Check for bootstrap token if configured
+  const bootstrapToken = Deno.env.get("BOOTSTRAP_TOKEN");
+  if (bootstrapToken) {
+    const providedToken = req.headers.get("x-bootstrap-token");
+    if (providedToken !== bootstrapToken) {
+      console.warn(`Invalid bootstrap token attempt from IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        }
+      );
+    }
+  }
+
   try {
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",

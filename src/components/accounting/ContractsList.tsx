@@ -13,7 +13,7 @@ import { ExportButtons } from "@/components/ExportButtons";
 import { exportToExcel, exportToPDF, contractExportConfig } from "@/lib/exportUtils";
 
 type Contract = Tables<"contracts"> & {
-  projects?: { name: string } | null;
+  projects?: { project_name: string } | null;
 };
 
 interface ContractsListProps {
@@ -26,7 +26,7 @@ export function ContractsList({ filterType }: ContractsListProps) {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Tables<"contracts"> | undefined>();
-  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
+  const [projects, setProjects] = useState<Array<{ id: string; project_name: string }>>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -37,8 +37,8 @@ export function ContractsList({ filterType }: ContractsListProps) {
   const fetchProjects = async () => {
     const { data } = await supabase
       .from("projects")
-      .select("id, name")
-      .order("name");
+      .select("id, project_name")
+      .order("project_name");
     
     if (data) setProjects(data);
   };
@@ -48,7 +48,7 @@ export function ContractsList({ filterType }: ContractsListProps) {
     try {
       let query = supabase
         .from("contracts")
-        .select("*, projects(name)")
+        .select("*, projects(project_name)")
         .order("created_at", { ascending: false });
 
       if (filterType === "appendix") {
@@ -103,9 +103,9 @@ export function ContractsList({ filterType }: ContractsListProps) {
   const filteredContracts = contracts.filter((contract) => {
     const searchLower = search.toLowerCase();
     return (
-      contract.contract_number.toLowerCase().includes(searchLower) ||
-      contract.client_name.toLowerCase().includes(searchLower) ||
-      contract.projects?.name?.toLowerCase().includes(searchLower)
+      contract.contract_number?.toLowerCase().includes(searchLower) ||
+      contract.client_name?.toLowerCase().includes(searchLower) ||
+      contract.projects?.project_name?.toLowerCase().includes(searchLower)
     );
   });
 
@@ -202,7 +202,7 @@ export function ContractsList({ filterType }: ContractsListProps) {
                   <TableCell>{contract.contract_number}</TableCell>
                   <TableCell>{contract.client_name}</TableCell>
                   <TableCell>{contract.is_appendix ? "✓" : ""}</TableCell>
-                  <TableCell>{contract.projects?.name || ""}</TableCell>
+                  <TableCell>{contract.projects?.project_name || ""}</TableCell>
                   <TableCell>{contract.contract_type}</TableCell>
                   <TableCell>{formatCurrency(contract.contract_value)}</TableCell>
                   <TableCell>{formatCurrency(contract.payment_value)}</TableCell>

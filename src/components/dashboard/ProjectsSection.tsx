@@ -20,14 +20,13 @@ type ProjectPriority = "low" | "medium" | "high" | "urgent";
 
 interface Project {
   id: string;
-  name: string;
+  project_name: string;
+  project_code: string | null;
   description: string | null;
-  location: string | null;
-  status: ProjectStatus;
-  priority: ProjectPriority;
+  client_name: string | null;
+  status: string | null;
   start_date: string | null;
   end_date: string | null;
-  budget: number | null;
   created_at: string;
 }
 
@@ -39,14 +38,13 @@ export const ProjectsSection = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
+    project_name: "",
+    project_code: "",
     description: "",
-    location: "",
-    status: "planning" as ProjectStatus,
-    priority: "medium" as ProjectPriority,
+    client_name: "",
+    status: "planning",
     start_date: "",
     end_date: "",
-    budget: "",
   });
 
   const { data: projects, isLoading } = useQuery({
@@ -67,20 +65,13 @@ export const ProjectsSection = () => {
     queryFn: async () => {
       const projectIds = projects?.map((p) => p.id) || [];
       
-      const [tasksData, membersData] = await Promise.all([
-        supabase
+      const tasksData = await supabase
           .from("tasks")
           .select("id, project_id, status")
-          .in("project_id", projectIds),
-        supabase
-          .from("team_members")
-          .select("*")
-          .in("project_id", projectIds),
-      ]);
+          .in("project_id", projectIds);
 
       return {
         tasks: tasksData.data || [],
-        members: membersData.data || [],
       };
     },
     enabled: !!projects && projects.length > 0,
@@ -88,16 +79,8 @@ export const ProjectsSection = () => {
 
   const getProjectStats = (projectId: string) => {
     const tasks = projectsWithDetails?.tasks.filter((t) => t.project_id === projectId) || [];
-    const teamMembers = projectsWithDetails?.members.filter((m) => m.project_id === projectId) || [];
     
-    const members = teamMembers.map((m) => ({
-      id: m.id,
-      user_id: m.user_id,
-      profiles: {
-        full_name: "User",
-        avatar_url: null,
-      },
-    }));
+    const members: any[] = [];
     
     const taskStats = {
       total: tasks.length,
@@ -106,7 +89,7 @@ export const ProjectsSection = () => {
       on_hold: 0,
       completed: tasks.filter((t) => t.status === "completed").length,
       at_risk: 0,
-      delayed: tasks.filter((t) => t.status === "overdue").length,
+      delayed: 0,
     };
 
     const progress = taskStats.total > 0
@@ -119,8 +102,13 @@ export const ProjectsSection = () => {
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const { error } = await supabase.from("projects").insert({
-        ...data,
-        budget: data.budget ? parseFloat(data.budget) : null,
+        project_name: data.project_name,
+        project_code: data.project_code || null,
+        description: data.description || null,
+        client_name: data.client_name || null,
+        status: data.status,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
         created_by: user?.id,
       });
       if (error) throw error;
@@ -144,8 +132,13 @@ export const ProjectsSection = () => {
       const { error } = await supabase
         .from("projects")
         .update({
-          ...data,
-          budget: data.budget ? parseFloat(data.budget) : null,
+          project_name: data.project_name,
+          project_code: data.project_code || null,
+          description: data.description || null,
+          client_name: data.client_name || null,
+          status: data.status,
+          start_date: data.start_date || null,
+          end_date: data.end_date || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -184,14 +177,13 @@ export const ProjectsSection = () => {
 
   const resetForm = () => {
     setFormData({
-      name: "",
+      project_name: "",
+      project_code: "",
       description: "",
-      location: "",
+      client_name: "",
       status: "planning",
-      priority: "medium",
       start_date: "",
       end_date: "",
-      budget: "",
     });
     setEditingProject(null);
     setIsOpen(false);
@@ -209,14 +201,13 @@ export const ProjectsSection = () => {
   const handleEdit = (project: Project) => {
     setEditingProject(project);
     setFormData({
-      name: project.name,
+      project_name: project.project_name,
+      project_code: project.project_code || "",
       description: project.description || "",
-      location: project.location || "",
-      status: project.status,
-      priority: project.priority,
+      client_name: project.client_name || "",
+      status: project.status || "planning",
       start_date: project.start_date || "",
       end_date: project.end_date || "",
-      budget: project.budget?.toString() || "",
     });
     setIsOpen(true);
   };

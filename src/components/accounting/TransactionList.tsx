@@ -24,7 +24,7 @@ interface Transaction {
   amount: number;
   description: string | null;
   project_id: string | null;
-  projects: { name: string } | null;
+  projects: { project_name: string } | null;
 }
 
 interface TransactionListProps {
@@ -111,7 +111,7 @@ export const TransactionList = ({ transactions, onEdit, onDelete }: TransactionL
                   <TableCell>{transaction.category}</TableCell>
                   <TableCell>
                     {transaction.projects ? (
-                      <span className="text-sm">{transaction.projects.name}</span>
+                      <span className="text-sm">{transaction.projects.project_name}</span>
                     ) : (
                       <span className="text-sm text-muted-foreground">-</span>
                     )}

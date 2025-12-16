@@ -64,16 +64,16 @@ export const GlobalSearch = ({ onNavigate }: GlobalSearchProps) => {
       // Search projects
       const { data: projects } = await supabase
         .from("projects")
-        .select("id, name, location")
-        .or(`name.ilike.%${term}%,location.ilike.%${term}%,description.ilike.%${term}%`)
+        .select("id, project_name, description")
+        .or(`project_name.ilike.%${term}%,description.ilike.%${term}%`)
         .limit(5);
 
       if (projects) {
         projects.forEach((p) => {
           searchResults.push({
             id: p.id,
-            title: p.name,
-            subtitle: p.location || undefined,
+            title: p.project_name,
+            subtitle: p.description || undefined,
             type: "project",
           });
         });

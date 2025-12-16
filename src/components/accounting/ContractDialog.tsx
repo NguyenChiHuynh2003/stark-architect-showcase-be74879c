@@ -15,7 +15,7 @@ interface ContractDialogProps {
   onOpenChange: (open: boolean) => void;
   contract?: Tables<"contracts">;
   onSuccess?: () => void;
-  projects: Array<{ id: string; name: string }>;
+  projects: Array<{ id: string; project_name: string }>;
 }
 
 export function ContractDialog({ open, onOpenChange, contract, onSuccess, projects }: ContractDialogProps) {
@@ -125,7 +125,7 @@ export function ContractDialog({ open, onOpenChange, contract, onSuccess, projec
                   <SelectItem value="none">Không chọn</SelectItem>
                   {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
-                      {project.name}
+                      {project.project_name}
                     </SelectItem>
                   ))}
                 </SelectContent>

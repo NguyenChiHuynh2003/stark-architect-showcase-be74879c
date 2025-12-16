@@ -20,7 +20,7 @@ interface Transaction {
   amount: number;
   description: string | null;
   project_id: string | null;
-  projects: { name: string } | null;
+  projects: { project_name: string } | null;
 }
 
 export const AccountingSection = () => {
@@ -45,7 +45,7 @@ export const AccountingSection = () => {
         .select(`
           *,
           projects (
-            name
+            project_name
           )
         `)
         .order("transaction_date", { ascending: false });
@@ -93,7 +93,7 @@ export const AccountingSection = () => {
         (t) =>
           t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
           t.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.projects?.name.toLowerCase().includes(searchTerm.toLowerCase())
+          t.projects?.project_name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 

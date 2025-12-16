@@ -42,7 +42,7 @@ const expenseCategories = [
 export const TransactionDialog = ({ open, onOpenChange, transaction, onSuccess }: TransactionDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
+  const [projects, setProjects] = useState<Array<{ id: string; project_name: string }>>([]);
   
   const [formData, setFormData] = useState({
     transaction_date: "",
@@ -79,8 +79,8 @@ export const TransactionDialog = ({ open, onOpenChange, transaction, onSuccess }
     const fetchProjects = async () => {
       const { data } = await supabase
         .from("projects")
-        .select("id, name")
-        .order("name");
+        .select("id, project_name")
+        .order("project_name");
       
       if (data) setProjects(data);
     };
@@ -245,7 +245,7 @@ export const TransactionDialog = ({ open, onOpenChange, transaction, onSuccess }
                 <SelectItem value="none">Không liên kết</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
-                    {project.name}
+                    {project.project_name}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -118,7 +118,7 @@ export const OverviewSection = () => {
         .from("projects")
         .select(`
           id,
-          name,
+          project_name,
           status,
           project_items (
             id,
@@ -146,8 +146,8 @@ export const OverviewSection = () => {
 
         projectsData.push({
           id: project.id,
-          name: project.name,
-          status: project.status,
+          name: project.project_name,
+          status: project.status || 'planning',
           items: project.project_items || [],
           teamCount: uniqueAssignees.size,
         });

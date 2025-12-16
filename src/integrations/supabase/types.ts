@@ -14,7 +14,157 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contract_guarantees: {
+        Row: {
+          contract_id: string | null
+          created_at: string
+          created_by: string | null
+          expiry_date: string | null
+          guarantee_number: string | null
+          guarantee_type: string
+          guarantee_value: number | null
+          id: string
+          issue_date: string | null
+          issuing_bank: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expiry_date?: string | null
+          guarantee_number?: string | null
+          guarantee_type: string
+          guarantee_value?: number | null
+          id?: string
+          issue_date?: string | null
+          issuing_bank?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expiry_date?: string | null
+          guarantee_number?: string | null
+          guarantee_type?: string
+          guarantee_value?: number | null
+          id?: string
+          issue_date?: string | null
+          issuing_bank?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_guarantees_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          client_name: string | null
+          contract_number: string
+          contract_type: string | null
+          contract_value: number | null
+          created_at: string
+          created_by: string | null
+          effective_date: string | null
+          expiry_date: string | null
+          id: string
+          is_appendix: boolean | null
+          payment_value: number | null
+          project_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          contract_number: string
+          contract_type?: string | null
+          contract_value?: number | null
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_appendix?: boolean | null
+          payment_value?: number | null
+          project_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          contract_number?: string
+          contract_type?: string | null
+          contract_value?: number | null
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_appendix?: boolean | null
+          payment_value?: number | null
+          project_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          project_code: string | null
+          project_name: string
+          start_date: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          project_code?: string | null
+          project_name: string
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          project_code?: string | null
+          project_name?: string
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
